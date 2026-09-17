@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Committee · Review workspace</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <symbol id="i-verified" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-proposed" viewBox="0 0 16 16"><path d="M8 1.8L14.2 8 8 14.2 1.8 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+ <symbol id="i-legacy" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2.6 2.2"/></symbol>
+ <symbol id="i-contested" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.6 6.4l4.8 3.2M10.4 6.4L5.6 9.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+ <symbol id="i-dismissed" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.4 11.6l7.2-7.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+ <symbol id="i-measured" viewBox="0 0 16 16"><path d="M2 12.5a6 6 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 12.5l3-4.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+ <symbol id="i-detector" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.6v3M8 11.4v3" stroke="currentColor" stroke-width="1.5"/></symbol>
+ <symbol id="i-chevron" viewBox="0 0 16 16"><path d="M4 6.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+ <symbol id="i-close" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+ <symbol id="i-compare" viewBox="0 0 16 16"><rect x="1.8" y="2.8" width="5.2" height="10.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2.8" width="5.2" height="10.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+ <symbol id="i-external" viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 9.5V13H3V4h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+ <symbol id="i-prev" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-next" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+ <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 2.5v11M4.5 6L8 2.5 11.5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="i-topic" viewBox="0 0 16 16"><path d="M2.5 2.5h5.2l5.8 5.8-5.2 5.2-5.8-5.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="5.6" cy="5.6" r="1" fill="currentColor"/></symbol>
+</svg>
+
+<a class="skip" href="#reading">Skip to the selected proposal</a>
+
+<header class="bar">
+ <div class="brand"><strong>Committee</strong><span>Review workspace</span></div>
+ <form class="search" role="search" id="searchform">
+  <label class="vh" for="search">Find a proposal or speaker</label>
+  <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+  <input id="search" type="search" placeholder="Find a proposal or speaker" autocomplete="off" spellcheck="false" disabled>
+  <kbd aria-hidden="true">/</kbd>
+ </form>
+ <div class="bar-controls">
+  <label class="field" id="event-field" hidden><span>Event</span><select id="event" aria-label="Event"><option value="">All events</option></select></label>
+  <label class="field"><span>Topic</span><select id="topic" aria-label="Topic" disabled><option value="">All topics</option></select></label>
+  <label class="field" data-tip="Collaborative: existing committee collaboration information is shown. Strict-blind: this helper also hides reviewer-derived findings; Sessionize itself is unchanged. Organiser: may show ranks."><span>View</span><select id="profile" aria-label="View" disabled>
+   <option value="collaborative">Collaborative</option>
+   <option value="strict-blind">Strict-blind</option>
+   <option value="organiser">Organiser</option>
+  </select></label>
+  <button id="capture" type="button" class="capture" hidden aria-haspopup="dialog" data-tip="Sessionize data: capture, sync now, scheduled sync"><span id="capture-text"></span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+  <button id="help" type="button" class="quiet" data-tip="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+  <button id="lock" type="button" class="quiet" aria-label="Lock workspace" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span>Lock</span></button>
+ </div>
+</header>
+
+<div id="banner" class="banner" role="alert" hidden><span id="banner-text"></span><button id="banner-retry" type="button" class="quiet" hidden>Try again</button><button id="banner-close" type="button" class="quiet" aria-label="Dismiss message"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+
+<nav id="workspace-nav" class="workspace-nav" aria-label="Workspace" hidden>
+ <span id="workspace-role">Local admin</span>
+ <button type="button" data-section="review" aria-current="page">Review</button>
+ <button type="button" data-section="sync">Data &amp; sync</button>
+ <button type="button" data-section="analysis">Analysis</button>
+ <button type="button" data-section="publish">Publish &amp; access</button>
+</nav>
+<main id="main">
+ <section id="unlock" class="unlock">
+  <h1>Open the review workspace</h1>
+  <p>Paste the access token from the file the local server printed. Proposals, evidence and your corrections stay on this Mac. The token is remembered by this browser until you press Lock.</p>
+  <form id="login" novalidate>
+   <label for="token">Local access token</label>
+   <input id="token" type="password" autocomplete="off" spellcheck="false" required aria-describedby="token-error">
+   <p id="token-error" class="field-error" hidden></p>
+   <button type="submit" class="primary">Unlock</button>
+  </form>
+ </section>
+
+ <div id="workspace" class="workspace" hidden>
+  <aside class="docket" aria-labelledby="count">
+   <div class="docket-head">
+    <p id="count" class="count">Loading proposals…</p>
+    <div class="docket-tools">
+     <label class="field compact"><span>Sort</span><select id="sort">
+      <option value="title">Title</option>
+      <option value="open">Open findings first</option>
+      <option value="checked">Recently checked</option>
+      <option value="speaker">Speaker</option>
+     </select></label>
+     <label class="check"><input type="checkbox" id="openonly"> Open findings only</label>
+    </div>
+    <p id="scope" class="scope" hidden></p>
+    <p id="blind-note" class="blind-note" hidden>Strict-blind hides reviewer-derived findings from this helper only. It does not change what Sessionize itself shows.</p>
+   </div>
+   <ul id="list" class="list" aria-label="Proposals"></ul>
+   <footer class="docket-foot">Private pilot · advisory findings only · <a href="/review-helper.user.js">Local userscript</a> · <a href="https://greasyfork.org/en/scripts/503828/" target="_blank" rel="noreferrer">Public Sessionize Helper<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a></footer>
+  </aside>
+
+  <article id="reading" class="reading" tabindex="-1" aria-labelledby="reading-title">
+   <div id="reading-inner" class="reading-inner"></div>
+  </article>
+
+  <aside id="compare" class="compare" aria-label="Comparison" hidden>
+   <div id="compare-inner" class="compare-inner"></div>
+  </aside>
+ </div>
+</main>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<p id="announce" class="vh" aria-live="polite"></p>
+
+<section id="data" class="data admin-page" aria-labelledby="data-title" hidden>
+ <div class="dlg-head"><h2 id="data-title" tabindex="-1">Data &amp; sync</h2><button type="button" class="quiet" id="data-close" aria-label="Back to review">Back to review</button></div>
+ <p class="muted">Sync runs only while the local service is running. The API URL and any cookie login stay on this Mac and are never shown here.</p>
+ <div id="data-body" aria-live="polite"></div>
+</section>
+<dialog id="shortcuts" class="dlg shortcuts" aria-labelledby="shortcuts-title">
+ <div class="dlg-head"><h2 id="shortcuts-title">Keyboard shortcuts</h2><button type="button" class="quiet" id="shortcuts-close" aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+ <p class="muted">Single keys work when the focus is not in a text field.</p>
+ <dl class="keys">
+  <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous proposal</dd></div>
+  <div><dt><kbd>/</kbd></dt><dd>Search proposals</dd></div>
+  <div><dt><kbd>e</kbd></dt><dd>Expand or collapse all evidence</dd></div>
+  <div><dt><kbd>d</kbd></dt><dd>Dismiss the focused finding (asks for a reason)</dd></div>
+  <div><dt><kbd>c</kbd></dt><dd>Compare with the closest related proposal</dd></div>
+  <div><dt><kbd>Esc</kbd></dt><dd>Close the comparison, a form or this sheet</dd></div>
+  <div><dt><kbd>?</kbd></dt><dd>Show this sheet</dd></div>
+ </dl>
+</dialog>
+</body>
+</html>
