@@ -211,11 +211,13 @@ Mode: Operate. This file records the built world in `web/style.css`, `web/index.
 
 ## Overview
 
-**Creative North Star: "The Docket and the Reading Desk"**
+The workspace has a dense proposal index on the left and a reading column on the right. The reading column uses a cool background. A white panel with a 1px border holds the submission title, speakers, topics, and abstract. The title uses 30px type; submission text uses 18px.
 
-The workspace is a committee tool, not a dashboard. It has one dense, scannable index on the left and one reading column on the right. The reading column is a desk in the cool ground tone. The submission (title, speakers, topics, abstract) sits on it as one white sheet with a hairline edge, set at 30/18 px. Findings are notes on the desk below the sheet: a state icon in a narrow gutter, a bold label with its state badge, the reason at 15 px, and one small line with evidence, actions and provenance. Expanded evidence is one record sentence plus compact source rows. Judgment stays with the human reviewer.
+Findings appear below the submission. Each finding has a state icon in a narrow gutter, a bold label, a state badge, and a reason in 15px type. A smaller line holds evidence, actions, and provenance. Expanded evidence shows one record sentence and compact source rows. The human reviewer decides which findings to accept.
 
-The world is restrained. There is one accent blue for selection, primary actions and focus. Colour that carries meaning appears only on finding state: amber for proposed or contested, subdued red for verified major findings, slate for legacy or dismissed, violet for detector signals in their own section. There is no green "all clear". The type is the system sans at a fixed rem scale with tabular numerals. Depth comes from tonal layering and hairline rules, not shadows.
+Blue identifies selection, primary actions, and focus. Finding states use amber for proposed or contested, subdued red for verified major findings, and slate for legacy or dismissed. Detector signals use violet in a separate section. The interface has no green overall approval state. Format and topic colors follow the categorical rules below.
+
+Use system sans-serif type at a fixed rem scale with tabular numerals. Separate regions with background tones and 1px rules. Do not use shadows.
 
 **Key Characteristics:**
 - Three tones of ground (off-white page, cooler rail, white reading surface) separated by 1px hairlines.
