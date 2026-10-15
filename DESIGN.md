@@ -217,7 +217,7 @@ Findings appear below the submission. Each finding has a state icon in a narrow 
 
 Blue identifies selection, primary actions, and focus. Finding states use amber for proposed or contested, subdued red for verified major findings, and slate for legacy or dismissed. Detector signals use violet in a separate section. The interface has no green overall approval state. Format and topic colors follow the categorical rules below.
 
-Use system sans-serif type at a fixed rem scale with tabular numerals. Separate regions with background tones and 1px rules. Do not use shadows.
+Use system sans-serif type at a fixed rem scale with tabular numerals. Separate regions with background tones and 1px rules. Only tooltips and dialogs use shadows.
 
 **Key Characteristics:**
 - Three tones of ground (off-white page, cooler rail, white reading surface) separated by 1px hairlines.
