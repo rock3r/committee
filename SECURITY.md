@@ -1,9 +1,11 @@
 # Security and private data
 
-The local admin is designed to listen on loopback. Its token grants access to private event data and administrative actions. Do not place it behind a public reverse proxy.
+The local admin listens on loopback. Anyone with its token can read private event data and run administrative actions. Keep the admin off public reverse proxies.
 
-Keep data, provider credentials, Sessionize endpoint URLs and publisher tokens outside the repository. Reader bundles still contain identifiable proposal data. Preview them before distribution and obtain the event owner's authorisation.
+Store data, provider credentials, Sessionize endpoint URLs and publisher tokens outside the repository.
 
-Do not include credentials, real proposals or private reviewer information in public issues. No dedicated security-reporting contact is provided.
+Reader bundles contain identifiable proposal data. Preview each bundle before distribution. Get the event owner's permission to share it.
 
-There has been no independent security audit. See the hosting guide for invitation scope, revocation and retention limitations.
+Keep credentials, real proposals and private reviewer information out of public issues. The project has no dedicated contact for security reports.
+
+No independent security audit has taken place. The [hosting guide](docs/hosting.md) explains invitation scope, revocation and retention limits.

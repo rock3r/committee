@@ -1,51 +1,72 @@
 # Sessionize import and sync
 
-Use Sessionize's supported JSON API for normal setup. It needs no browser login cookie. The endpoint URL is a bearer secret: keep it on the admin machine, never in the hosted bundle or userscript.
+Use Sessionize's supported JSON API to connect an event. The API needs no browser login cookie. Anyone with the endpoint URL can read its data. Keep the URL on the admin machine and out of hosted bundles and userscripts.
 
 ## Connect an event
 
-1. In Sessionize, open **API / Embed** and create a dedicated JSON endpoint. Do not change an endpoint used by the public event website.
-2. Select **Includes sessions: All**, remove category filters, and include unscheduled sessions. Enable the required session/speaker fields, including descriptions, biographies, format, track and relevant custom questions. Expose only fields Committee needs.
-3. Copy the **All** URL from **Get Code**: `https://sessionize.com/api/v2/<endpoint>/view/All`.
-4. In Committee's local **Data & sync → Connect another event**, enter the organiser event ID, event name and URL. Choose **Check coverage**. Compare the count with Sessionize's organiser count, excluding service slots such as lunch.
-5. Review statuses, field coverage and missing descriptions. Confirm the Sessionize scope settings and expected count, then save. **Sync now** imports the event; saving a source does not import it.
+1. Open Sessionize's **API / Embed** and create a dedicated JSON endpoint. Leave endpoints used by the public event website unchanged.
+2. Select **Includes sessions: All**. Remove category filters and include unscheduled sessions.
+3. Enable the session and speaker fields Committee needs. Include descriptions, biographies, format, track and relevant custom questions. Expose only required fields.
+4. Copy the **All** URL from **Get Code**: `https://sessionize.com/api/v2/<endpoint>/view/All`.
+5. In Committee, open **Data & sync → Connect another event**. Enter the organiser event ID, event name and endpoint URL.
+6. Choose **Check coverage**. Compare the result with Sessionize's organiser count. Exclude service slots such as lunch from that count.
+7. Review statuses, field coverage and missing descriptions. Check and confirm the Sessionize scope settings and expected count. Save the connection.
+8. Choose **Sync now** to import the event. Saving the source alone imports no data.
 
-The API doesn't identify the organiser event or prove its own filters. Counts and status distribution are evidence, not proof of completeness. Committee requires explicit scope confirmation, rejects missing joins/duplicates, checks required fields, and blocks count reductions during sync. Replacing a source that omits existing imported sessions is blocked unless the local caller explicitly confirms removals. A legitimate reduced dataset requires a fresh coverage check and deliberate source update; failed refreshes preserve the current snapshot.
+The API response cannot identify the organiser event or prove its filter settings. Counts and status distributions help assess coverage but cannot prove completeness.
 
-Service sessions are excluded. Submission `status` is retained, and an explicit `Withdrawn` status maps to withdrawn. Unknown/missing status is recorded as unknown, not inferred from absence. Full withdrawn coverage must be checked against the organiser list for each configured endpoint. Reviewer comments, gem/nope votes and evaluation results are **not** part of this connector; there is no claim of supported API coverage for them.
+Committee requires explicit scope confirmation. It rejects missing joins and duplicates, checks required fields and blocks count reductions during sync. Replacing a source that omits imported sessions requires explicit removal confirmation from the local caller.
 
-API category/question definitions join by ID. Core arrays are validated, and custom fields remain local. The endpoint itself never appears in status responses, logs, published data or error text. It is saved in `sessionize-sources.json` in the private data directory with mode 600.
+For a legitimate reduction, run a fresh coverage check and deliberately update the source. A failed refresh preserves the current snapshot.
 
-## Scheduling
+Committee excludes service sessions and retains each submission's `status`. An explicit `Withdrawn` status sets the withdrawn flag. Committee records missing or unknown statuses as unknown. It never infers a status from a missing record.
 
-Manual-only is the default. Enable periodic sync per event, 15–10,080 minutes. The local service must be running and the machine awake. Missed intervals coalesce into one refresh. No LLM or detector runs automatically after sync: only mechanical checks run. Analysis and publication are separate explicit actions.
+Check withdrawn coverage against the organiser list for each endpoint. This connector excludes reviewer comments, gem/nope votes and evaluation results. It makes no claim that the supported API covers them.
 
-API requests use the Python HTTPS transport (Python 3.9+), with no cookie jar, redirects, or browser dependency. Responses are bounded to 16 MB; reads have timeouts and bounded retries on 429/5xx. Sessionize caches API responses for up to five minutes.
+The importer validates core arrays and joins category and question definitions by ID. Custom fields stay local. Committee saves the URL in private `sessionize-sources.json` with mode 600. It excludes the URL from status responses, logs, published data and error text.
 
-## Legacy fallback
+## Schedule updates
 
-The old authenticated organiser collector remains for installations that explicitly need it. It is **not** the preferred setup and is not necessary for API sync:
+Manual sync is the default. Enable periodic sync separately for each event, with an interval of 15–10,080 minutes. Keep the local service running and the machine awake. The service combines missed intervals into one refresh.
+
+Sync runs mechanical checks only. An administrator must separately request language model analysis, detector checks and publication.
+
+API requests use the Python HTTPS transport and require Python 3.9 or later. They use no cookie jar or browser and refuse redirects. Responses have a 16 MB limit. Reads have timeouts and limited retries for 429 and 5xx responses. Sessionize can cache responses for up to five minutes.
+
+## Use the legacy collector
+
+Installations that need the authenticated organiser collector can configure it explicitly:
 
 ```sh
 REVIEW_HELPER_DATA=/absolute/private-data node src/cli.ts sessionize-auth /absolute/sessionize.cookies
 ```
 
-It uses internal read-only list/stats/detail routes and a Netscape cookie file. Login expiry requires reconnecting. A saved API source takes precedence for that event. Its complete-snapshot checkpoint handling and historical version retention remain available.
+Normal API sync needs no collector setup. The collector uses internal read-only list, stats and detail routes with a Netscape cookie file. Reconnect when the login expires. A saved API source takes precedence for that event.
 
-## Local API
+The collector retains its complete-snapshot checkpoints and historical versions.
 
-All except `/api/runtime` require the local admin token. Mutations reject the Sessionize origin.
+## Call the local API
 
-- `POST /api/source/check`: source configuration, or `{eventId}` to re-check the saved URL without revealing it.
-- `PUT /api/source`: verified source configuration; does not import.
-- `GET /api/sync`: redacted `sources`, legacy `credentialConfigured`, configs and runs.
-- `POST /api/sync {eventId}`: queues/deduplicates a refresh.
-- `PUT /api/sync/config {eventId,enabled,intervalMinutes}`: schedule.
+Every route below requires the local admin token. `/api/runtime` alone permits access without that token. Mutation routes reject requests from the Sessionize origin.
 
-Source configuration: `eventId`, `eventName`, `url`, `expectedCount`, `requiredFields` (field names), `allStatusesConfirmed`, `unscheduledConfirmed`. For a first check, `expectedCount:1` is allowed as a placeholder; save requires the actual count. Optional `allowRemovalConfirmed:true` on save acknowledges known missing IDs after reviewing coverage; it never bypasses a complete mismatch with the existing event.
+| Route | Action |
+| --- | --- |
+| `POST /api/source/check` | Check a source configuration. Pass `{eventId}` to recheck a saved URL without returning it. |
+| `PUT /api/source` | Save a checked source configuration without importing data. |
+| `GET /api/sync` | Read redacted `sources`, legacy `credentialConfigured`, configurations and runs. |
+| `POST /api/sync {eventId}` | Queue a refresh or reuse an already queued refresh. |
+| `PUT /api/sync/config {eventId,enabled,intervalMinutes}` | Set the event schedule. |
+
+A source configuration contains `eventId`, `eventName`, `url`, `expectedCount`, `requiredFields`, `allStatusesConfirmed` and `unscheduledConfirmed`. `requiredFields` holds field names.
+
+The first check accepts `expectedCount:1` as a placeholder. Saving requires the actual count. After reviewing missing IDs, pass `allowRemovalConfirmed:true` on save to acknowledge known removals. This option cannot bypass a complete mismatch with the existing event.
 
 ## Verification record
 
-The new connector was exercised against Sessionize's official demo: 10 submissions, 10 speakers, one excluded service slot, category/format/track joins and question definitions validated. A real accepted-only event endpoint was also fetched twice into an isolated database: 111 sessions and 114 speakers; the second import changed zero sessions. Its incomplete coverage was rejected against the full 386-submission event. A full-scope real event API import remains unverified; the complete historical import used the legacy collector.
+Tests against Sessionize's official demo covered 10 submissions, 10 speakers and one excluded service slot. Checks also covered category, format and track joins, and question definitions.
+
+A real accepted-only endpoint imported 111 sessions and 114 speakers into an isolated database. Its second import changed zero sessions. Committee rejected its incomplete coverage against the full 386-submission event.
+
+A real full-scope API import remains unverified. The complete historical import used the legacy collector.
 
 Sources: [Sessionize API guide](https://sessionize.com/playbook/api), [official demo All response](https://sessionize.com/api/v2/jl4ktls0/view/All).

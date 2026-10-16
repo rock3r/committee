@@ -1,11 +1,15 @@
 # Committee
 
-Committee helps CfP reviewers inspect concrete, evidence-backed concerns. It offers advisory labels, source links, topics and related context. It does not predict acceptance, cast votes or turn speaker visibility into a quality score.
+Committee helps call for proposals (CfP) reviewers examine concerns and their evidence. It gives reviewers advisory labels, source links, topics and related information. Reviewers decide how to use that information.
 
-A local admin machine imports and analyses private submissions, reviews findings, and publishes an explicitly selected read-only bundle. Reviewers use a hosted website and independent Sessionize userscript; the admin machine can be offline after publication.
+Committee makes no acceptance predictions and casts no votes. It assigns no quality score based on a speaker's visibility.
 
-Quality and AI authorship are separate. Unknown expertise is not adverse evidence. Speaker concerns require identity confirmation and human approval. Local meetup/DevFest appearances alone do not establish problematic talk reuse. Adjacent technologies can be relevant to the audience.
+The local admin imports private submissions and runs analysis. An administrator reviews findings and publishes selected data in a read-only bundle. Reviewers access that bundle through a hosted website or the separate Sessionize userscript. The admin machine can go offline after publication.
 
-Private corpora, credentials and raw research stay outside the source checkout. Publishing code and distributing an approved reviewer bundle are different actions. Neither is performed automatically. Read-only access can be revoked for future requests, but downloaded copies cannot be erased remotely.
+Reviewers must assess proposal quality separately from AI authorship. Missing expertise information provides no evidence against a speaker. Publishing speaker concerns requires identity confirmation and human approval. Local meetup or DevFest appearances alone cannot establish problematic talk reuse. Technologies related to the main subject can suit the audience.
 
-See docs/architecture.md for current implementation and explicit limitations, docs/analysis.md for provider behavior, and docs/hosting.md for deployment.
+Keep private datasets, credentials and raw research outside the source checkout. An operator must separately approve code publication and reviewer bundle distribution. Committee automates neither action.
+
+An administrator can revoke future read access. Revocation cannot erase copies that reviewers already downloaded.
+
+The [architecture guide](docs/architecture.md) describes current behaviour and limits. The [analysis guide](docs/analysis.md) covers providers. The [hosting guide](docs/hosting.md) covers deployment.

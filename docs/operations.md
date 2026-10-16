@@ -1,26 +1,46 @@
 # Local operation and recovery
 
-Run one Committee service per private data directory. The default binds only `127.0.0.1:43127`; it is not a LAN server. `REVIEW_HELPER_DATA` must point outside the source checkout. The access token, database, API source URLs, publication target and analysis artifacts are private. Keep that directory mode 700 and sensitive files mode 600. Provider keys are supplied in the server environment.
+Run one Committee service per private data directory. The default address is `127.0.0.1:43127`, which accepts only local connections. Set `REVIEW_HELPER_DATA` to a directory outside the source checkout.
 
-## Daily workflow
+Keep the access token, database, API source URLs, publication target and analysis files private. Use mode 700 for the directory and mode 600 for sensitive files. Supply provider keys through the server environment.
 
-1. Open the local workspace and check source coverage/sync freshness.
-2. Sync now, or let the per-event schedule run while the service is awake.
-3. Run bounded analysis or optional paid detection explicitly.
-4. Review sources and exact quotations. Approve findings/topics or dismiss mistakes.
-5. Preview a bundle, review included fields, and publish deliberately.
-6. Give reviewers read-only invitations; revoke them when no longer needed.
+## Run the daily review
 
-Scheduled sync requires the local process and machine to stay running. No launchd service is installed automatically. An operator can run `npm start` under their existing process manager using absolute working/data paths and their own credential environment. The service's PID lock prevents concurrent workers against the same private store; stale locks from exited processes are recovered. Do not manually delete a lock belonging to a live process.
+1. Open the local workspace. Check source coverage and the last sync time.
+2. Choose **Sync now**, or leave the service running for scheduled per-event updates.
+3. Request analysis with a batch limit. Request paid detection separately if needed.
+4. Check sources and exact quotations. Approve findings and topics, or dismiss mistakes.
+5. Preview the bundle and inspect its fields. Publish the reviewed revision.
+6. Give reviewers read-only invitations. Revoke them when reviewers finish.
 
-## Backup
+Scheduled sync needs the process running and the machine awake. Committee installs no launchd service. You can run `npm start` with an existing process manager. Use absolute working and data paths, and supply the required credentials through its environment.
 
-Stop the service before copying the entire private data directory to a protected backup. Copying only `review.sqlite` while WAL writes are active is not a reliable backup. Preserve file permissions. Back up external credential files separately using your credential manager, not the public repository.
+The service uses a process ID (PID) lock to prevent concurrent access to the same private store. It recovers stale locks after their processes exit. Leave locks for running processes in place.
 
-To restore, stop the service, restore the complete private directory, then start with the restored `REVIEW_HELPER_DATA`. Keep the existing access token if you want existing local sessions to remain connected. Stored API endpoint URLs and publication tokens remain sensitive in backups. Interrupted paid operations may have completed remotely: inspect ambiguous detector submissions before retrying.
+## Back up and restore data
 
-No automated retention deletion or person-level erasure command is implemented yet. R2 holds historical published objects for rollback; revocation prevents future reads with the revoked token, but does not delete old objects or copies already downloaded. A retention/erasure operation must cover local snapshots, findings, caches, publication files, R2 revisions and backups.
+Stop the service before copying the complete private data directory to a protected backup. Preserve file permissions. An active SQLite write-ahead log (WAL) can contain writes missing from `review.sqlite`. Copying only that database file during writes can produce an incomplete backup.
 
-## Release boundary
+Back up external credential files separately through your credential manager. Keep them out of the public repository.
 
-The checkout should contain only code, documentation and synthetic tests. Real event records remain outside it. `build-reader.mjs` uses an explicit source-asset allowlist. Before public source release, audit tracked files and history, generated assets, screenshots, test output and logs for private records/credentials. Do not publish the existing historical dataset or derived corpus. Public release and real cloud publication remain separate approvals.
+To restore data:
+
+1. Stop the service.
+2. Restore the complete private directory.
+3. Set `REVIEW_HELPER_DATA` to the restored directory and start the service.
+
+Preserve the access token to keep existing local browser sessions connected. Backups still contain sensitive API endpoint URLs and publication tokens.
+
+A provider may have completed an interrupted paid request. Inspect detector submissions with an unknown result before retrying.
+
+## Account for retained copies
+
+Committee has no automated retention deletion or person-level erasure command. R2 retains older published objects for rollback. Revoking a token blocks future reads through that token. It leaves stored objects and downloaded copies unchanged.
+
+A retention or erasure operation must cover local snapshots, findings, caches, publication files, R2 revisions and backups.
+
+## Check a source release
+
+Keep only code, documentation and fictional test data in the checkout. Store real event records elsewhere. `build-reader.mjs` copies assets from an explicit allowlist.
+
+Before a public source release, inspect tracked files and history for private records and credentials. Inspect generated assets, screenshots, test output and logs too. Exclude the existing historical dataset and any derived corpus. Public code release and real cloud publication need separate approvals.
