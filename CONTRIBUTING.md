@@ -1,11 +1,15 @@
 # Contributing
 
-Use Node.js 26+ and Python 3.9+. Run `npm ci` followed by `npm run check` before proposing a change. Backend and Worker tests live in `test/`; frontend tests live beside `web/app.js`. Add regression tests for changed data, authentication or publication behaviour.
+Install Node.js 26 or later and Python 3.9 or later. Run `npm ci`, then `npm run check`, before proposing a change.
 
-Use `npm run demo` for browser checks and screenshots. Never add real submissions, speaker profiles, reviewer comments, access tokens, API responses or database files to fixtures, issues or pull requests. Keep private working directories outside the checkout. Git ignore rules are a convenience, not a substitute for inspecting the staged files.
+Backend and Worker tests live in `test/`. Frontend tests live beside `web/app.js`. Add regression tests when you change data handling, authentication or publication.
 
-For UI changes, inspect desktop and narrow layouts, keyboard focus, empty states and failure states. Save screenshots only from synthetic data. Frontend unit tests do not replace browser validation.
+Use `npm run demo` for browser checks and screenshots. Keep private working directories outside the checkout. Inspect staged files even when Git ignore rules cover private paths.
 
-Write documentation around the user's task: what to do, what happens, and what remains limited. Use the actual UI labels and executable commands. Distinguish tested behaviour from planned behaviour. Avoid marketing claims and repeated warnings that obscure the next action.
+Never put real submissions, speaker profiles, reviewer comments, access tokens, API responses or database files in fixtures, issues or pull requests.
 
-The source is licensed under [Apache 2.0](LICENSE).
+For interface changes, check desktop and narrow layouts in a browser. Check keyboard focus, empty states and failure states too. Use fictional data for screenshots. Run browser checks even when frontend unit tests pass.
+
+Write documentation around tasks. State the action, its result and any limits. Use current interface labels and commands that readers can run. Label planned behaviour separately from tested behaviour. Remove marketing claims and duplicate warnings.
+
+The source uses the [Apache 2.0 licence](LICENSE).

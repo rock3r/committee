@@ -1,6 +1,6 @@
 ---
 name: Committee review workspace
-description: A reviewer's docket and reading desk. One accent; status hues only on finding state.
+description: The workspace has a proposal list and reading column. One accent identifies actions and selection. Status colours identify finding states.
 colors:
   ground: "#f3f5f8"
   surface: "#ffffff"
@@ -202,192 +202,239 @@ components:
     padding: "0 20px"
 ---
 
-> Historical design brief. The current implementation has evolved; use the user guide and `web/style.css` for current behaviour and visual tokens.
+> This historical brief records earlier design values. The user guide and `web/style.css` describe current behaviour and tokens.
 
 
-# Design System: Committee review workspace
+# Committee workspace design
 
-Mode: Operate. This file records the built world in `web/style.css`, `web/index.html` and `web/app.js`. It replaces the earlier provisional note. Values were re-tuned for contrast during the build (muted text now reaches 5.8:1 on white; the rail was cooled). The token values above are the source of truth.
+This brief records the design implemented in `web/style.css`, `web/index.html` and `web/app.js` when it replaced the provisional note. Contrast adjustments gave muted text a measured 5.8:1 ratio on white. The proposal list received a cooler background.
+
+The frontmatter and prose contain different historical values, including seven-size and six-size type scales. Use current CSS for implementation.
 
 ## Overview
 
-The workspace has a dense proposal index on the left and a reading column on the right. The reading column uses a cool background. A white panel with a 1px border holds the submission title, speakers, topics, and abstract. The title uses 30px type; submission text uses 18px.
+The workspace places a dense proposal list on the left and a reading column on the right. A cool background surrounds the reading column's white submission panel. A 1px border encloses its title, speakers, topics and abstract. The original design used a 30px title and 18px submission text.
 
-Findings appear below the submission. Each finding has a state icon in a narrow gutter, a bold label, a state badge, and a reason in 15px type. A smaller line holds evidence, actions, and provenance. Expanded evidence shows one record sentence and compact source rows. The human reviewer decides which findings to accept.
+Findings appear below the submission. Each has a state icon, bold label, state badge and a reason in 15px type. A smaller line shows evidence, actions and origin. Expanded evidence shows one record sentence and compact source rows. A person decides which findings to accept.
 
-Blue identifies selection, primary actions, and focus. Finding states use amber for proposed or contested, subdued red for verified major findings, and slate for legacy or dismissed. Detector signals use violet in a separate section. The interface has no green overall approval state. Format and topic colors follow the categorical rules below.
+Blue identifies selection, primary actions and focus. Proposed and contested findings use amber. Verified major findings use subdued red. Legacy and dismissed findings use slate. Detector signals use violet in their own section. The interface has no green overall approval state. Format and topic colours follow the categorical rules below.
 
-Use system sans-serif type at a fixed rem scale with tabular numerals. Separate regions with background tones and 1px rules. Only tooltips and dialogs use shadows.
+Use system sans-serif type with fixed rem sizes and tabular numerals. Separate regions with background colours and 1px rules. Reserve shadows for tooltips and dialogs.
 
-**Key Characteristics:**
-- Three tones of ground (off-white page, cooler rail, white reading surface) separated by 1px hairlines.
-- One accent for actions and selection. Status hues on finding state. Categorical colour for glanceable session facts: a fixed hue per format (session blue, workshop green, keynote violet, lightning orange, panel teal) and a stable hashed hue (eight wash/text pairs) per topic name, used in the docket, on the sheet and in related lists.
-- Fixed seven-step type scale: 13 / 14 / 15 / 18 / 20 / 24 / 30 px in rem.
-- Compact 1px-bordered badges that fill only when verified.
-- Drawn 16px SVG state icons, one per finding state.
-- Short, non-blocking motion; reduced motion zeroes everything.
+The original design uses these properties:
+
+- Backgrounds use an off-white page, cooler proposal list and white reading panel, separated by 1px rules.
+- Actions and selection share one accent. Finding states use their own colours.
+- Formats use fixed colours: session blue, workshop green, keynote violet, lightning orange and panel teal.
+- Topic names select stable colours from eight hashed background/text pairs. Lists, submission panels and related proposals use the same mapping.
+- The original seven-size scale uses 13, 14, 15, 18, 20, 24 and 30px values expressed in rem.
+- Compact badges have 1px borders. Only verified badges have filled backgrounds.
+- Each finding state has a drawn 16px SVG icon.
+- Short animations leave input available. Reduced motion sets durations to zero.
 
 ## Colors
 
-A cool neutral family with one blue accent and four status hues that only appear on finding state.
+The palette combines cool neutrals, one blue action accent and four finding-state colours.
 
 ### Primary
-- **Accent blue** (`accent`, #1769aa): links, primary button fill, active topic chip, focus ring, caret, checkbox accent, the topic icon in the scope box.
-- **Accent ink** (`accent-ink`, #0f4d80): text colour of quiet and ghost buttons, the selected docket row title, related-proposal titles, primary hover fill.
-- **Accent wash / line** (`accent-wash` #e6f0f8, `accent-line` #9cc0dd): topic chip ground and border; hover ground of quiet and ghost buttons.
+| Tokens | Use |
+| --- | --- |
+| `accent` #1769aa | Links, primary fill, active topic chips, focus rings, caret, checkbox accent and the scope-box topic icon use blue. |
+| `accent-ink` #0f4d80 | Quiet and ghost button text, selected proposal titles, related titles and primary hover fills use dark blue. |
+| `accent-wash` #e6f0f8, `accent-line` #9cc0dd | Topic chips use these backgrounds and borders. Quiet and ghost buttons use the background on hover. |
 
 ### Secondary (status hues)
-- **Amber** (`amber` #835900, `amber-wash` #fdf3d7, `amber-line` #dcbd67): proposed and contested findings, the dotted underline on cited spans, evidence warnings. Amber means "not yet verified".
-- **Red** (`red` #a93636, `red-wash` #fbecec, `red-line` #e0a3a3): verified major findings (filled badge, filled docket mark, solid underline on the cited span), the error banner, form errors. Red never means "danger" in the marketing sense; it means "verified and major".
-- **Slate** (`slate` #6b7780, `slate-wash` #eceff2): legacy / unverified findings (dashed border) and dismissed findings (struck through, muted).
-- **Violet** (`violet` #4e3f80, `violet-wash` #f1eef8, `violet-line` #b6abd6): detector signals only. They live in their own "Detector signal" subsection under the findings, so the hue never mixes with editorial states.
+| Tokens | Use |
+| --- | --- |
+| `amber` #835900, `amber-wash` #fdf3d7, `amber-line` #dcbd67 | Proposed and contested findings, dotted quotation underlines and evidence warnings use amber. It identifies findings awaiting verification. |
+| `red` #a93636, `red-wash` #fbecec, `red-line` #e0a3a3 | Verified major findings use filled red badges and list marks, with solid quotation underlines. Error banners and form errors also use red. |
+| `slate` #6b7780, `slate-wash` #eceff2 | Legacy and unverified findings use dashed borders. Dismissed findings use muted text and strikethrough. |
+| `violet` #4e3f80, `violet-wash` #f1eef8, `violet-line` #b6abd6 | Detector signals use violet in a separate **Detector signal** subsection. Editorial states exclude this colour. |
 
 ### Neutral
-- **Ground** (`ground`, #f3f5f8): page background and the compare column; also the source card ground inside a finding.
-- **Rail** (`rail`, #eef1f5) and **rail hover** (`rail-hover`, #e4e9ee): docket rail and search field ground; row hover.
-- **Surface** (`surface`, #ffffff): top bar, reading column, selected docket row, inputs, badges.
-- **Ink** (`ink`, #232b31): body text, filled verified badge, verified state icon.
-- **Muted** (`muted`, #5b6770): secondary text, section headings, placeholder text, default badge text. Measured at 5.8:1 on white.
-- **Faint** (`faint`, #8a95a0): separators ("·"), the search icon. Never used for words.
-- **Line** (`line`, #d6dde4) and **line strong** (`line-strong`, #b3bfc9): hairline rules and borders; the stronger value on inputs, badges and the `kbd` key.
-- **Tooltip ground** (`tooltip-bg`, #26313a): the only dark surface.
+| Tokens | Use |
+| --- | --- |
+| `ground` #f3f5f8 | The page, compare column and source cards use this background. |
+| `rail` #eef1f5, `rail-hover` #e4e9ee | The proposal list and search use `rail`. Hovered rows use `rail-hover`. |
+| `surface` #ffffff | The top bar, reading column, selected row, inputs and badges use white. |
+| `ink` #232b31 | Body text, verified badge fills and verified icons use this colour. |
+| `muted` #5b6770 | Secondary text, headings, placeholders and default badge text use this colour. Its measured contrast on white is 5.8:1. |
+| `faint` #8a95a0 | Separators such as “·” and the search icon use this colour. Words must use another token. |
+| `line` #d6dde4, `line-strong` #b3bfc9 | Rules and borders use `line`. Inputs, badges and `kbd` use the stronger token. |
+| `tooltip-bg` #26313a | Tooltips use the only dark background. |
 
-### Named Rules
-**The Finding-State Rule.** Amber, red, slate and violet appear only on finding state: badges, docket marks, state icons, cited-span underlines, and their direct error or warning text. They never colour layout, headings, or decoration.
+### Apply colours by meaning
 
-**The Fill-Only-When-Verified Rule.** A badge or docket mark is filled only when the finding is verified: ink fill for verified, red fill for verified major. Every other state is an outlined or text-only badge, so an unverified finding can never look confirmed.
+Use amber, red, slate and violet on finding badges, list marks, state icons, quotation underlines and their direct errors or warnings. Keep those colours out of layout backgrounds, headings and decoration.
 
-**The No Green Rule.** There is no success hue. Missing evidence and empty finding lists are neutral text ("No open findings. Not an endorsement.").
+Fill badges and list marks only for verified findings. Use ink for verified findings and red for verified major findings. Give every other state an outline or text-only badge.
+
+The design has no success colour. Describe missing evidence and empty lists with neutral text. An empty finding list gives no assessment of proposal quality.
 
 ## Typography
 
-**Display Font:** none. The system sans is used everywhere.
-**Body Font:** system sans stack (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`)
-**Label/Mono Font:** none. `kbd` uses the same sans at 13px.
+Use the system sans stack everywhere: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`. The design has no separate display or monospace face. `kbd` uses the same sans at 13px.
 
-**Character:** native and quiet. Tabular numerals are on for the whole document so counts and dates line up. Headings use `text-wrap: balance`; the abstract and row titles use `text-wrap: pretty`.
+Enable tabular numerals throughout so counts and dates align. Headings use `text-wrap: balance`. Abstracts and row titles use `text-wrap: pretty`.
 
 ### Hierarchy
-The scale is six fixed rem steps (`--fs-13` 0.8125rem, `--fs-14` 0.875rem, `--fs-15` 0.9375rem, `--fs-17` 1.0625rem, `--fs-20` 1.25rem, `--fs-24` 1.5rem). No `clamp()`.
+This section records six fixed rem tokens: `--fs-13` 0.8125rem, `--fs-14` 0.875rem, `--fs-15` 0.9375rem, `--fs-17` 1.0625rem, `--fs-20` 1.25rem and `--fs-24` 1.5rem. Keep `clamp()` out of type sizing.
 
-- **Title** (650, 24px, 1.22, -0.012em): the selected proposal title and the unlock heading. Drops to 20px under 900px.
-- **Compare title** (650, 20px, 1.25, -0.01em): the second column's heading.
-- **Abstract** (400, 17px, 1.6): the abstract body in the reading column, max 72ch. In the compare column it is 15px / 1.55; under 900px it is 15px.
-- **Body** (400, 15px, 1.5): default page text, docket row titles (600), finding titles (600), related titles (600).
-- **Meta** (400, 14px, 1.45 to 1.5): meta lines, citations, evidence key-value pairs, source cards, buttons, notices, the banner.
-- **Label** (600, 13px, 0.06em, uppercase): section headings ("Findings", "Detector signal"), severity badges ("major", "minor", "info"). Also 13px without uppercase: docket subtitles, counts, badges, docket marks, tooltips, `kbd`, the navigation strip.
+| Role | Values and use |
+| --- | --- |
+| Title | Selected titles and unlock headings use weight 650, 24px, line height 1.22 and spacing -0.012em. Below 900px, they use 20px. |
+| Compare title | The second column heading uses weight 650, 20px, line height 1.25 and spacing -0.01em. |
+| Abstract | Reading abstracts use weight 400, 17px, line height 1.6 and maximum width 72ch. Compare abstracts use 15px/1.55. Below 900px, abstracts use 15px. |
+| Body | Default text uses weight 400 and 15px/1.5. Proposal, finding and related titles use weight 600. |
+| Meta | Metadata, citations, evidence pairs, source cards, buttons, notices and banners use weight 400, 14px and line height 1.45–1.5. |
+| Label | Section headings and severity labels use weight 600, 13px, 0.06em spacing and uppercase. |
 
-### Named Rules
-**The Six-Step Rule.** Every text size is one of the six `--fs-*` tokens. New surfaces do not introduce a seventh size.
+Proposal subtitles, counts, badges, list marks, tooltips, `kbd` and navigation also use 13px, without uppercase.
 
-**The Uppercase-Is-Structure Rule.** Uppercase 13px letterspaced text is used for structural section headings and severity labels only. It is not a decorative kicker above titles.
+### Reuse type tokens
+
+Every text size must use one of the six `--fs-*` tokens. New components must reuse those sizes. Reserve uppercase, letterspaced 13px text for section headings and severity labels. Keep it out of decorative text above titles.
 
 ## Layout
 
-The workspace is a CSS grid under a 48px sticky top bar: docket rail 368px, reading column fluid. When a comparison is open the grid becomes 300px / 1fr / 1fr. The workspace fills `100dvh - 48px`; each column scrolls on its own with `overscroll-behavior: contain`.
+The workspace uses a CSS grid beneath a sticky 48px top bar. The proposal list is 368px wide. The reading column fills the remaining width. Opening a comparison changes the grid to `300px / 1fr / 1fr`.
 
-- **Reading column:** padding 28px 48px 96px, inner content max 72ch, centred. Sections are separated by 30px and a hairline under a 13px uppercase heading.
-- **Compare column:** padding 28px 40px 96px, max 64ch, ground colour, hairline on its left. Sections are 22px apart.
-- **Docket rail:** head padding 14px 16px 10px 20px; rows padding 10px 14px 11px 20px with a hairline below; footer padding 10px 20px.
-- **Spacing rhythm:** 4 / 6 / 8 / 10 / 12 / 14 / 16 / 20 / 22 / 28 / 30 px. Inside components use 4 to 10; between blocks use 14 to 30.
-- **Reading measure:** finding reasons and citations are limited to 68ch, notices to 60ch, the unlock intro to 52ch.
+The workspace height is `100dvh - 48px`. Columns scroll independently with `overscroll-behavior: contain`.
+
+| Region | Dimensions |
+| --- | --- |
+| Reading column | Padding is 28px 48px 96px. Content centres within 72ch. Sections have 30px gaps and rules under 13px uppercase headings. |
+| Compare column | Padding is 28px 40px 96px. Content width reaches 64ch. It uses `ground`, a left rule and 22px section gaps. |
+| Proposal list | Header padding is 14px 16px 10px 20px. Row padding is 10px 14px 11px 20px with bottom rules. Footer padding is 10px 20px. |
+| Text widths | Reasons and citations reach 68ch, notices 60ch and the unlock introduction 52ch. |
+
+Spacing values are 4, 6, 8, 10, 12, 14, 16, 20, 22, 28 and 30px. Use 4–10px within components and 14–30px between blocks.
 
 ### Responsive
-- **Under 1180px:** the compare column moves below the reading column (two rows, docket spans both). The capture date and the "?" button are hidden; Lock becomes icon-only.
-- **Under 900px:** the grid becomes a single block. The top bar wraps, search takes a full row, the docket sits above the reading column at a maximum 46vh, column padding drops to 22px 16px 60px, the docket footer hides, and the bar and banner stop being sticky.
-- **Coarse pointer:** rows, badges, marks and buttons gain 2px more vertical padding.
-- **Print:** bar, docket, compare, navigation, actions and tooltips are hidden; only the reading column prints.
+Below 1180px, the compare column moves under the reading column. The proposal list spans both rows. The capture date and **?** button hide. **Lock** shows only its icon.
+
+Below 900px, the layout becomes one block. The top bar wraps and search fills a row. The proposal list appears above the reading column with a maximum height of 46vh. Column padding becomes 22px 16px 60px. The list footer hides. The bar and banner stop being sticky.
+
+For coarse pointers, add 2px of vertical padding to rows, badges, marks and buttons. Print shows only the reading column. Hide the bar, list, compare column, navigation, actions and tooltips.
 
 ## Elevation & Depth
 
-The system is flat. Depth comes from three tonal grounds (ground, rail, surface) and 1px hairlines in `line`. The selected docket row is "lifted" only by becoming white on the rail. Shadows exist in exactly two places, both floating layers.
+Separate regions with `ground`, `rail`, `surface` and 1px `line` rules. Selection changes a proposal row to white. Only tooltips and dialogs have shadows.
 
 ### Shadow Vocabulary
-- **Tooltip** (`box-shadow: 0 2px 6px rgba(0,0,0,.14), 0 8px 24px rgba(0,0,0,.16)`): the dark tooltip.
-- **Dialog** (`box-shadow: 0 8px 24px rgba(0,0,0,.16)`): the shortcuts dialog, over a `rgba(35,43,49,.28)` backdrop.
+| Component | Shadow |
+| --- | --- |
+| Dark tooltip | Use `box-shadow: 0 2px 6px rgba(0,0,0,.14), 0 8px 24px rgba(0,0,0,.16)`. |
+| Shortcuts dialog | Use `box-shadow: 0 8px 24px rgba(0,0,0,.16)` over a `rgba(35,43,49,.28)` backdrop. |
 
-### Named Rules
-**The Floating-Only Rule.** Shadows appear only on layers that float above the page (tooltip, dialog). Cards, rows, badges and columns never carry a shadow.
+Cards, rows, badges and columns must remain shadow-free.
 
 ## Shapes
 
-Corners are small and consistent. Badges and docket marks 3px; chips, `kbd` and skeletons 4px; buttons, inputs, source cards and the scope box 5px; the search field and tooltip 6px; the dialog 8px. Borders are 1px. State is expressed through border style, not radius: legacy badges and inferred topic chips use a dashed border; `kbd` uses a 2px bottom border to read as a key. Cited spans in the abstract carry a 1.5px underline offset 4px (dotted amber for proposed, solid red for verified, dotted slate for dismissed).
+Corner radii follow five values:
+
+| Radius | Components |
+| --- | --- |
+| 3px | Badges and proposal-list marks use this radius. |
+| 4px | Chips, `kbd` and skeletons use this radius. |
+| 5px | Buttons, inputs, source cards and the scope box use this radius. |
+| 6px | Search and tooltips use this radius. |
+| 8px | Dialogs use this radius. |
+
+Borders are 1px. Legacy badges and inferred topic chips use dashed borders to identify their states. `kbd` has a 2px bottom border. Quoted abstract spans use 1.5px underlines with a 4px offset. Proposed spans use dotted amber, verified spans solid red and dismissed spans dotted slate.
 
 ## Components
 
 ### Buttons
-Two vocabularies, both deliberate. Bordered buttons are for workspace-level actions (Unlock, Lock, shortcuts, form submits). Text buttons are for actions inside content (Evidence, Dismiss, Add note, Compare, Show in abstract).
-- **Shape:** 5px radius, 1px border, padding 5px 10px, 14px text, inline flex with a 6px gap.
-- **Primary:** accent fill, white text. Hover darkens to accent ink.
-- **Quiet:** white fill, accent-ink text, line-strong border. Hover: accent wash fill, accent-line border. Active: #d8e6f2.
-- **Ghost:** no border, accent-ink text, padding 4px 6px. Hover: accent wash.
-- **Inline link buttons** (in citations and the scope box): no border, accent text, underline offset 3px.
-- **Transitions:** background, border and colour in 120ms ease-out. Disabled: opacity 0.55. Busy: opacity 0.7 with a progress cursor.
+Use bordered buttons for **Unlock**, **Lock**, shortcuts and form submission. Use text buttons for **Evidence**, **Dismiss**, **Add note**, **Compare** and **Show in abstract**.
+
+| Property or variant | Values |
+| --- | --- |
+| Base | Use a 5px radius, 1px border, 5px 10px padding and 14px text. Inline flex uses a 6px gap. |
+| Primary | Use accent fill and white text. Hover uses `accent-ink` fill. |
+| Quiet | Use white fill, `accent-ink` text and `line-strong` border. Hover uses `accent-wash` fill and `accent-line` border. Active fill is #d8e6f2. |
+| Ghost | Use no border, `accent-ink` text and 4px 6px padding. Hover uses `accent-wash`. |
+| Citation and scope links | Use no border, accent text and a 3px underline offset. |
+| Transitions | Background, border and colour change over 120ms ease-out. |
+| Disabled and busy | Disabled opacity is 0.55. Busy opacity is 0.7 with a progress cursor. |
 
 ### Chips (topic)
-- **Style:** 13px, padding 4px 8px, 4px radius, accent wash fill, accent-line border, accent-ink text.
-- **Inferred:** dashed border on a white fill (model-inferred topic, not a submitted tag).
-- **Active:** accent fill, white text. **Static:** muted text on the rail ground, no pointer.
+Topic chips use 13px text, 4px 8px padding, a 4px radius, `accent-wash` fill, `accent-line` border and `accent-ink` text. Model-inferred topics use dashed borders and white fill. Active chips use accent fill with white text. Static chips use muted text on `rail` without a pointer cursor.
 
 ### Badges (finding state)
-- **Base:** 13px, weight 500, padding 3px 6px, 3px radius, 1px line-strong border, white fill, muted text, help cursor, tooltip on hover or focus.
-- **Verified:** ink fill, white text. **Verified major** (`concern`): red fill, white text.
-- **Proposed** and **Contested:** amber border and text. **Legacy / unverified:** dashed border, slate text. **Measured:** ink text (a fact, not a judgment). **Detector:** violet-line border, violet text. **Dismissed:** slate text, line-through.
-- **Severity:** borderless, uppercase, 0.06em, muted, weight 600 ("major", "minor", "info").
+Base badges use 13px text at weight 500, 3px 6px padding, a 3px radius and a 1px `line-strong` border. They have white fill, muted text and a help cursor. Tooltips appear on hover and focus.
+
+| State | Appearance |
+| --- | --- |
+| Verified | Use ink fill and white text. |
+| Verified major (`concern`) | Use red fill and white text. |
+| Proposed and contested | Use amber borders and text. |
+| Legacy / unverified | Use dashed borders and slate text. |
+| Measured | Use ink text to identify a measurement without judging quality. |
+| Detector | Use `violet-line` borders and violet text. |
+| Dismissed | Use slate text with strikethrough. |
+| Severity | Use borderless uppercase labels, 0.06em spacing, muted colour and weight 600 for **major**, **minor** and **info**. |
 
 ### State icons
-16px drawn SVG symbols in `index.html`, coloured by the same states: verified is a filled circle with a check (ink; red for verified major), proposed an outlined diamond (amber), contested a circle with a cross (amber), legacy a dashed circle (slate), dismissed a circle with a slash (slate), measured a gauge (muted), detector concentric circles (violet). Chrome icons (search, close, compare, chevron, prev/next, lock, pin, topic, external) use the same 1.5 to 1.6 stroke.
+`index.html` defines drawn 16px SVG state symbols. Verified uses a checked filled circle in ink, or red for major findings. Proposed uses an amber diamond outline. Contested uses an amber crossed circle. Legacy uses a dashed slate circle; dismissed uses a slashed slate circle. Measured uses a muted gauge. Detector uses violet concentric circles.
+
+Search, close, compare, chevron, previous/next, lock, pin, topic and external-link icons use 1.5–1.6 strokes.
 
 ### Docket rows
-- **Layout:** two-column grid: title (15px, 600, two-line clamp) over speakers (13px, muted, one line) on the left; a right-aligned stack of compact marks on the right.
-- **Marks:** icon plus count at 13px, 3px radius, coloured per state; only verified major fills red. "Withdrawn" is an uppercase 13px outlined tag.
-- **States:** hover rail-hover; current row white with accent-ink title; focus ring inset by 2px.
+Each proposal row uses two columns. The left shows a 15px, weight-600 title clamped to two lines above one line of muted 13px speaker names. The right aligns compact marks vertically.
+
+Marks combine an icon and count at 13px with a 3px radius and state colour. Only verified major marks have red fill. **Withdrawn** uses an uppercase 13px outlined tag.
+
+Hovered rows use `rail-hover`. The current row uses white fill and an `accent-ink` title. Inset the focus ring by 2px.
 
 ### Finding rows
-State icon (18px box), 15px semibold title, state badge, severity badge, then a right-aligned meta line (provenance, "checked …", dotted underline for tooltip triggers). Below: reason (68ch), citation in italic quotes with a "Show in abstract" link button, then text actions. The evidence accordion uses a `grid-template-rows: 0fr → 1fr` transition (250ms) with a key-value list (14px, muted keys) and source cards (ground fill, 5px radius, hairline border, floated date). Dismissed findings turn title and reason muted and the citation slate.
+Each finding starts with an 18px icon box, 15px semibold title, state badge and severity badge. A right-aligned metadata line shows origin and check time. Tooltip triggers have dotted underlines.
+
+Below, show the reason within 68ch, an italic quotation with **Show in abstract**, then text actions. Evidence expands with a 250ms `grid-template-rows: 0fr → 1fr` transition. Its key-value list uses 14px text and muted keys. Source cards use `ground`, a 5px radius, a thin border and a floated date.
+
+Dismissal makes the title and reason muted and the quotation slate.
 
 ### Inputs / Fields
-- **Style:** white fill, 1px line-strong border, 5px radius, padding 6px 10px, accent caret. Hover border #92a1ad.
-- **Search:** rail fill and border, 6px radius, icon at left, `/` key hint at right; on focus the fill turns white, the border accent and the hint fades.
-- **Focus (global):** 2px accent outline, 2px offset.
-- **Error:** red border, red 14px message, 280ms shake.
-- **Correction form:** 14px semibold label, textarea min 66px, buttons in a row, max 60ch.
+Inputs use white fill, a 1px `line-strong` border, 5px radius, 6px 10px padding and an accent caret. Hover changes the border to #92a1ad.
+
+Search uses `rail` fill and border, a 6px radius, a left icon and a right `/` hint. Focus changes its fill to white and border to accent, while the hint fades.
+
+Global focus uses a 2px accent outline with 2px offset. Errors use red borders, 14px red messages and a 280ms shake. Correction forms have 14px semibold labels and textareas at least 66px high. Place buttons in a row and limit forms to 60ch.
 
 ### Navigation
-The top bar is a 48px white sticky strip with brand (15px bold plus 13px muted "Review workspace"), the 360px search, "Topic" and "View" select fields at 13px, the capture date, and the "?" and Lock quiet buttons. The navigation strip in the reading column is 13px muted text with ghost Previous / Next buttons and a position counter.
+The white sticky top bar is 48px high. Its brand uses 15px bold text with a muted 13px **Review workspace** label. It contains 360px search, 13px **Topic** and **View** selectors, the capture date, and quiet **?** and **Lock** buttons.
+
+Reading-column navigation uses muted 13px text, ghost **Previous** and **Next** buttons, and a position counter.
 
 ### Tooltip
-Dark (`tooltip-bg`) with white 13px text, padding 8px 11px, 6px radius, max 320px, placed above the trigger (below when there is no room). Shown on hover and on focus; hidden instantly on leave or click. Also used as `aria-describedby`.
+Tooltips use `tooltip-bg`, white 13px text, 8px 11px padding, a 6px radius and a maximum width of 320px. Place them above the trigger, or below when space is limited. Show them on hover and focus. Hide them immediately on leave or click. Connect them through `aria-describedby`.
 
 ### Compare column
-A second reading column opened in place by "Compare" (or `c`). The inner block slides in from 24px right with a fade over 350ms; closing waits 350ms before removing the column (immediately under reduced motion).
+**Compare** or `c` opens a second reading column in place. Its content moves from 24px right and fades in over 350ms. Closing waits 350ms before removing the column. Reduced motion removes it immediately.
 
 ### Motion
-Motion is short and never blocks input. All timings are in `style.css`; the standard ease is `cubic-bezier(.22, 1, .36, 1)`.
-- **Enter cue** (120ms ease-out): on proposal change the reading content fades in from 4px below. There is no exit phase, so `j` / `k` never wait.
-- **Accordion** (250ms, standard ease): evidence rows and the chevron flip.
-- **Compare slide** (350ms, standard ease): compare column enter and exit.
-- **Tooltip** (40ms delay + 80ms ease-out in; instant out).
-- **Hover** (120ms ease-out): button, row and chip colour changes.
-- **Span flash** (300ms ease-out, held 1600ms): amber or red wash on a cited span after "Show in abstract".
-- **Dialog** (150ms ease-out with `@starting-style`), **shake** (280ms), **skeleton pulse** (1000ms loop).
-- **Reduced motion:** all transition durations and animations are set to zero; the compare close is immediate; the enter cue is skipped.
+Motion leaves input available. `style.css` defines timings. The standard easing is `cubic-bezier(.22, 1, .36, 1)`.
 
-## Do's and Don'ts
+| Motion | Timing and behaviour |
+| --- | --- |
+| Proposal entrance | Reading content fades in from 4px below over 120ms ease-out. There is no exit phase, so `j` and `k` remain immediate. |
+| Evidence accordion | Rows and chevron animate over 250ms with standard easing. |
+| Compare column | Entry and exit use 350ms with standard easing. |
+| Tooltip | Entry has a 40ms delay and 80ms ease-out animation. Exit is immediate. |
+| Hover | Button, row and chip colours change over 120ms ease-out. |
+| Quotation highlight | **Show in abstract** applies amber or red fill over 300ms ease-out and holds it for 1600ms. |
+| Dialog | Entry uses 150ms ease-out with `@starting-style`. |
+| Error shake | The animation takes 280ms. |
+| Skeleton | The pulse loops every 1000ms. |
 
-### Do:
-- **Do** keep colour that carries meaning on finding state only (the Finding-State Rule).
-- **Do** fill a badge only for verified (ink) and verified major (red); outline every other state.
-- **Do** keep detector results in their own subsection with the violet outline, separated from editorial findings.
-- **Do** use one of the six `--fs-*` sizes and the 3 / 4 / 5 / 6 / 8 px radius steps.
-- **Do** mark every tooltip trigger with a dotted underline or a help cursor, and show the tooltip on keyboard focus too.
-- **Do** keep motion under 350ms and non-blocking, and zero it under `prefers-reduced-motion`.
-- **Do** state missing evidence in neutral words ("Not recorded.", "check date not recorded").
+Reduced motion sets transition and animation durations to zero. It closes comparison immediately and skips the proposal entrance.
 
-### Don't:
-- **Don't** add a green or success hue. There is no "all clear" state.
-- **Don't** let proposed, legacy or model-inferred items look confirmed: no fills, no solid underlines, no ink text for them.
-- **Don't** add shadows to rows, cards, badges or columns; only floating layers (tooltip, dialog) carry a shadow.
-- **Don't** add metric cards, hero blocks, charts or empty panels; the abstract is the page.
-- **Don't** show ranks or scores in evaluation views.
-- **Don't** introduce a display face, an icon font or emoji glyphs; state icons are drawn SVG symbols.
+## Requirements for later changes
+
+Keep detector results in a separate violet-outlined subsection. Proposed, legacy and model-inferred items must remain visibly unconfirmed. Leave their backgrounds unfilled and avoid solid underlines or ink text.
+
+Reuse the six `--fs-*` sizes and 3, 4, 5, 6 and 8px radii. Mark tooltip triggers with dotted underlines or help cursors. Show tooltips on keyboard focus.
+
+Keep interaction motion under 350ms and leave input available. The timing table separately records a 350ms comparison transition. Disable motion under `prefers-reduced-motion`. Describe missing evidence neutrally, including whether a check date exists.
+
+Keep the abstract as the main content. Exclude metric cards, large promotional sections, charts and empty panels. Evaluation views must hide ranks and scores. Use drawn SVG state symbols without display faces, icon fonts or emoji glyphs.

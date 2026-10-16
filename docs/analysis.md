@@ -1,6 +1,6 @@
 # Analysis backend
 
-The local service runs bounded jobs. Sync does not trigger paid checks. The admin explicitly selects an event and a maximum number of submissions. Advisory outputs never vote, rank, accept or reject sessions.
+An administrator starts each analysis job and chooses its event and submission limit. Sync never starts paid checks. Analysis gives reviewers advice. It never votes, ranks, accepts or rejects sessions.
 
 ## Configure providers
 
@@ -26,70 +26,116 @@ Create a private JSON file outside the repository:
 }
 ```
 
-Verifier, search, evidence hosts and Pangram are optional. The model adapter uses the Chat Completions JSON-object contract (`max_completion_tokens`, `store:false`); a provider must support it. Arbitrary providers have not been compatibility-certified. Use an enabled model ID. Export keys into the server process environment through your preferred local credential manager, then:
+The verifier, search, evidence hosts and Pangram are optional. Choose an enabled model ID. Providers must support the Chat Completions JSON-object contract, including `max_completion_tokens` and `store:false`. Compatibility with arbitrary providers remains unverified.
+
+Use a local credential manager to export keys into the server environment. Then run:
 
 ```sh
 REVIEW_HELPER_DATA=/absolute/private-data node src/cli.ts analysis-config /absolute/private-config.json
 REVIEW_HELPER_DATA=/absolute/private-data npm start
 ```
 
-The config stores environment-variable names, not the API keys. No keys enter the browser or bundle. The backend uses a bounded Python HTTPS transport; failed paid POSTs are not automatically retried. Per-run limits bound calls and (for the HTTP adapter) output tokens, **not dollar cost**. Configure vendor spending limits separately.
+The configuration stores environment-variable names. API keys stay out of the configuration, browser and published bundle.
 
-## Workflow and evidence
+The backend uses a Python HTTPS transport with request limits. It never automatically retries failed paid POST requests. Per-run limits restrict call counts. The HTTP adapter also limits output tokens. These limits cannot cap dollar costs. Configure provider spending limits separately.
 
-`POST /api/analysis/run {eventId,limit}` queues up to 100 changed/unprocessed submission versions. Each can make at most three Brave searches, one main model call, and one verifier call. Queries contain speaker names/title and audience; private abstracts and notes are not search queries. Model payloads contain title, abstract, format, existing topics, selected speaker biography/tagline/links, and gathered public evidence. Reviewer comments and outcomes are not used by this pipeline.
+## Run a limited research batch
 
-Search snippets are labelled as leads. At most three returned pages are fetched when their exact host is operator-allowed. Fetches require public IP addresses, pin the resolved socket address, refuse redirects, limit response size, strip scripts/styles and retain a bounded text excerpt. JavaScript-only pages, redirected pages and PDFs are not parsed. Failed page retrieval remains visible as a snippet/fetch failure. Sources do not become authoritative merely by being retrieved.
+`POST /api/analysis/run {eventId,limit}` queues up to 100 changed or unprocessed submission versions. Each version can use at most three Brave searches, one main model call and one verifier call.
 
-The model proposes substantive topics and draft editorial/claim/speaker findings. Exact abstract spans are mandatory. Source references must resolve to supplied evidence; arbitrary invented URLs cannot enter a finding. The verifier sees the original input and evidence alongside the draft. Its agreement is recorded, not treated as factual proof. All model findings remain tentative and unpublished pending human approval. Speaker/circuit/reuse findings also require confirmed identity.
+Search queries contain speaker names, the title and audience. They exclude private abstracts and notes. Model inputs include the title, abstract, format, existing topics, selected speaker biography, tagline, links and gathered public evidence. The pipeline excludes reviewer comments and outcomes.
 
-The pipeline currently provides a bounded research-and-draft workflow, **not** a comprehensive professional-history crawler or an autonomous technical fact-checker. It does not establish source date/version applicability automatically, resolve identities across all platforms, compute semantic cross-talk alternatives, or prove that no relevant evidence exists. Inspect coverage and sources before approving. A missing finding is not an endorsement.
+Search snippets identify possible sources. The fetcher retrieves at most three returned pages whose exact hosts the operator allows. It requires public IP addresses and pins each resolved socket address. It refuses redirects, limits response sizes, strips scripts and styles, and retains limited text excerpts.
 
-`POST /api/analysis/approve {id,approved,identityConfirmed}` controls finding publication eligibility. `POST /api/analysis/topics {versionId,approved}` approves the inferred topic set. Approved topics merge case-insensitively with explicit tags. `GET /api/analysis` exposes progress without model endpoint credentials. Dismissals remain separate and suppress publication even after approval. Content edits create a new version and invalidate previous findings.
+The fetcher cannot parse JavaScript-only pages, redirected pages or PDFs. Failed retrievals remain visible alongside snippets. Reviewers must judge each source's authority themselves.
 
-Analysis jobs are durable. Completed work is keyed by content version, rubric and config. Interrupted model jobs require an explicit rerun because requests may already have been billed. Provider responses and draft artifacts stay local.
+The model suggests substantive topics and draft editorial, claim and speaker findings. Warning evidence requires exact abstract spans. Source references must resolve to supplied evidence. Validation rejects invented URLs.
 
-## Pangram
+The verifier receives the original input, evidence and draft. Committee records its agreement without treating that agreement as proof. All model findings remain tentative and unpublished until human approval. Speaker, circuit and reuse findings also require confirmed identity.
 
-Detection is separate: `POST /api/detector/run {eventId,limit}` sends **abstract text only** to Pangram's asynchronous task API with `public_dashboard_link:false`. Task IDs persist before polling. Startup resumes known tasks; ambiguous submissions are marked uncertain rather than resent. `POST /api/detector/resume {id}` resumes paused polling without a new submission. `GET /api/detector` reports state without text or credentials.
+The workflow collects limited research and drafts findings. It cannot fully research professional histories or independently establish technical facts. It cannot automatically establish source date or version applicability, resolve every identity, or compute semantic alternatives across talks. It also cannot prove that relevant evidence is absent.
 
-Results are cached by selected model and normalized text. Whitespace-only edits reuse the result; typo edits do not trigger a paid rerun automatically because detection is always an explicit action. Generated-text fractions are detector signals, not authorship probabilities or quality scores. This implementation uses individual tasks, not discounted bulk submission. Winston is not implemented.
+Check coverage and sources before approving output. An unchecked or problematic proposal can have no findings.
 
-See the live-validation scope below. Synthetic adapters also test publication gating and detector task persistence; they do not establish model accuracy.
+## Approve findings and topics
+
+| Route | Action |
+| --- | --- |
+| `POST /api/analysis/approve {id,approved,identityConfirmed}` | Set a finding's eligibility for publication. |
+| `POST /api/analysis/topics {versionId,approved}` | Approve the inferred topic set. |
+| `GET /api/analysis` | Read progress without model endpoint credentials. |
+
+Approved topics merge case-insensitively with explicit tags. Dismissal remains separate and blocks publication even after approval. Content edits create a version and invalidate earlier findings.
+
+Jobs save progress durably. Completed work uses a key containing content version, rubric and configuration. An interrupted model job requires an explicit rerun because a provider may already have billed the request. Provider responses and draft files stay local.
+
+## Run Pangram detection
+
+Detection uses a separate endpoint: `POST /api/detector/run {eventId,limit}`. It sends abstract text only to Pangram's asynchronous task API with `public_dashboard_link:false`.
+
+Committee saves task IDs before polling. Startup resumes known tasks. If submission success is uncertain, Committee records that state without resending. `POST /api/detector/resume {id}` resumes paused polling without submitting another task. `GET /api/detector` reports state without text or credentials.
+
+The cache keys results by selected model and normalised text. Whitespace-only edits reuse a result. Typo edits never start a paid rerun automatically. An administrator must request every detection run.
+
+Generated-text fractions report detector signals. They give neither authorship probabilities nor quality scores. This implementation uses individual tasks. It has no discounted bulk submission or Winston support.
+
+Synthetic adapters test publication approval rules and saved detector tasks. They cannot establish model accuracy. The verification record below states the live checks performed.
 
 References: [Chat Completions](https://platform.openai.com/docs/api-reference/chat/create), [Brave Search](https://api-dashboard.search.brave.com/app/documentation/web-search), [Pangram REST API](https://docs.pangram.com/quickstart-rest).
 
-## Local Pi transport and captured research
+## Use local Pi providers
 
-A model can alternatively use the operator's installed Pi providers:
+The model can use the operator's installed Pi providers:
 
 ```json
 {"audience":"Android developers","model":{"transport":"pi","provider":"zai","model":"glm-5.3"},"maxOutputTokens":4000}
 ```
 
-Pi credentials remain in Pi. Each subprocess receives the submission via stdin, has no tools, workspace context, skills or saved session, and uses low reasoning. Installed provider extensions remain available. Calls have a four-minute timeout and a bounded response size. **`maxOutputTokens` applies to the HTTP adapter only; Pi uses its provider's output limit.** Two submissions run concurrently. Failures require an explicit retry. Invalid JSON and warning quotation/source references never publish partial findings. A normally completed response missing only its final outer object brace can be repaired deterministically, with that repair recorded; truncated responses and internal syntax errors are rejected. Diagnostics and exact model inputs remain in the private SQLite `analysis_attempts` table; they are excluded from reader bundles and job-status responses.
+Credentials stay in Pi. Each subprocess receives the submission through stdin and uses low reasoning. It has no tools, workspace context, skills or saved session. Installed provider extensions remain available.
 
-For reproducible, operator-guided research, write a private seed array containing `{eventId,sessionId,sources:[{url,title,purpose,speaker?}],speakers:[]}` and run:
+Calls time out after four minutes and have a response-size limit. `maxOutputTokens` applies only to HTTP. Pi uses its provider's output limit. Two submissions run concurrently. Failures need an explicit retry.
+
+Invalid JSON and invalid warning quotations or source references cannot publish partial findings. Committee can repair a normally completed response missing only its final outer object brace. It records this deterministic repair. It rejects truncated responses and internal syntax errors.
+
+The private SQLite `analysis_attempts` table stores diagnostics and exact model inputs. Reader bundles and job-status responses exclude those records.
+
+## Collect selected research sources
+
+Operators can supply sources for repeatable research. Write a private seed array containing `{eventId,sessionId,sources:[{url,title,purpose,speaker?}],speakers:[]}`. Then run:
 
 ```sh
 REVIEW_HELPER_DATA=/absolute/private-data node scripts/collect-research.ts /absolute/private-seeds.json
 ```
 
-The collector retrieves public HTTPS pages through the guarded fetcher and caches them under the private data directory. It records failed retrievals instead of silently treating them as checked. This is **source collection, not automatic web discovery**. Brave discovery requires its own configured key. Research packets bind to the exact stored submission content and are frozen when enqueued. Updated packets change the job cache key. `POST /api/analysis/run` optionally accepts a `sessionIds` array for a targeted validation batch.
+The collector retrieves public HTTPS pages through the guarded fetcher. It caches pages in the private data directory and records failed retrievals. Operators select these sources themselves. Automatic Brave discovery requires a separate configured key.
 
-The local reading panel shows speaker assessments, claim checks, exact quotation origin (abstract or biography), source links, captured excerpts and coverage limitations. These are model assessments, not human confirmations. The system requires exact abstract spans for warning findings and topic suggestions, and exact abstract, biography or submitted topic-experience spans for claim checks. Invalid optional claim checks are omitted with a visible coverage note; their original responses remain in the private attempts table. Invalid warning evidence still fails the run. Unavailable pages do not count as captured evidence. A later successful analysis supersedes earlier model findings while retaining the history and reviewer dispositions.
+Research packets bind to the exact stored submission content. Jobs freeze them when queued. Updated packets change the job cache key. Pass an optional `sessionIds` array to `POST /api/analysis/run` for a targeted validation batch.
 
-## Reusing existing detector output
+The local reading panel shows model speaker assessments and claim checks. It also shows quotation origins, source links, captured excerpts and coverage limits. A person must still confirm these assessments.
+
+Warning findings and topic suggestions require exact abstract spans. Claim checks require exact spans from the abstract, biography or submitted topic-experience fields.
+
+Committee omits invalid optional claim checks and displays a coverage note. The private attempts table retains their original responses. Invalid warning evidence fails the run. Unavailable pages never count as captured evidence.
+
+A later successful analysis replaces earlier model findings as current. Committee retains their history and reviewer dispositions.
+
+## Reuse existing detector output
 
 ```sh
 REVIEW_HELPER_DATA=/absolute/private-data node src/cli.ts import-snapshot /absolute/sessionize-snapshot.json
 REVIEW_HELPER_DATA=/absolute/private-data EVENT_ID=123 node src/cli.ts import-pangram /absolute/pangram-bulk-results.json
 ```
 
-The snapshot importer accepts the organiser export shape (`eventId`, `capturedAt`, `sessions` with `description`, `speakers` and `fields`). It excludes old editorial judgments, votes, ranks and reviewer comments. This is a saved-snapshot import, not evidence that authenticated Sessionize sync was performed today.
+The snapshot importer accepts the organiser export shape: `eventId`, `capturedAt` and `sessions` containing `description`, `speakers` and `fields`. It excludes old editorial judgments, votes, ranks and reviewer comments. Importing a saved snapshot provides no evidence of a current authenticated Sessionize sync.
 
-Pangram bulk output is matched by normalized abstract text and detector model, not merely by session ID. No provider requests are made. For reviewed minor edits, `PANGRAM_REUSE_REVIEW=/absolute/reuse-review.json` supplies a map of session ID to review reason. Reuse retains the original cache key and an audit entry explaining the old/new text hashes; the UI states that an older result was reused. Material edits must not be included in this map.
+Pangram imports match normalised abstract text and detector model. A matching session ID alone cannot establish a match. Importing makes no provider requests.
 
-Real GLM-5.3 calls through Pi and captured public sources were exercised locally in September 2026. Automated discovery through Brave and fresh paid Pangram requests were not exercised; existing Pangram outputs were imported instead. Tests cover frozen research inputs, invalid quotation rejection, invalid/truncated Pi JSON, draft publication gating, superseded findings and detector reuse. Corpus-specific validation receipts belong in the private data directory, never this repository.
+For reviewed minor edits, set `PANGRAM_REUSE_REVIEW=/absolute/reuse-review.json`. This file maps session IDs to review reasons. Reuse retains the original cache key. An audit entry explains the old and new text hashes. The interface states that it reused an older result. Exclude material edits from this map.
 
-An explicit `/api/analysis/run` request with `revalidateSaved:true` can reuse a saved valid-JSON response after a validation fix only for the same job and exactly matching model input. It records a revalidation audit event instead of charging for the same response again.
+## Verification record
+
+Local checks in September 2026 exercised real GLM-5.3 calls through Pi and captured public sources. They left automated Brave discovery and fresh paid Pangram requests untested. Checks imported existing Pangram outputs instead.
+
+Tests cover frozen research inputs, invalid quotation rejection, invalid or truncated Pi JSON, draft publication approval rules, superseded findings and detector reuse. Keep dataset-specific validation records in the private data directory and out of this repository.
+
+After a validation fix, an explicit `/api/analysis/run` request with `revalidateSaved:true` can reuse a saved valid-JSON response. The job and model input must match exactly. Committee records a revalidation audit event and avoids charging for the same response again.

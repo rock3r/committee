@@ -1,15 +1,19 @@
-# Hosting the read-only reviewer copy
+# Host the reviewer site
 
-Committee has two runtimes:
+Committee runs the administrator workspace locally and hosts a read-only copy for reviewers.
 
-- **Admin:** Node 26+, Python 3.9+, local SQLite and private source/evidence files. Imports, research, approvals and bundle construction run here.
-- **Reader:** a Cloudflare Worker serving frontend assets and curated bundles from a private R2 bucket. No SQLite, Python, Sessionize login or model keys run in the Worker. The Mac can be offline after publication.
+| Runtime | Responsibilities and requirements |
+| --- | --- |
+| Admin | Node 26 or later and Python 3.9 or later run imports, research, approvals and bundle creation. SQLite and source/evidence files stay private. |
+| Reader | A Cloudflare Worker serves frontend assets and selected bundles from private R2 storage. It holds no SQLite database, Python runtime, Sessionize login or model keys. |
 
-A bundle still contains identifiable submission information and approved findings. Protected hosting is distribution to authorised reviewers, not anonymisation or permission to publish a historical corpus. Preview and approve the exact fields before upload. The reader has been exercised in the local Workers runtime. Deployment to a cloud account remains unverified.
+The admin Mac can go offline after publication. Bundles still identify speakers and proposals and contain approved findings. Get permission from the event owner before distributing them. Protected hosting alone grants no permission to publish a historical dataset.
+
+Preview the exact fields before upload. Local Workers runtime tests passed. Deployment to a cloud account remains unverified.
 
 ## Prepare the deployment
 
-From the source folder:
+Run these commands from the source folder:
 
 ```sh
 npm ci
@@ -17,61 +21,81 @@ node scripts/build-reader.mjs
 npx wrangler login
 ```
 
-Wrangler 4.132.0 is pinned by the lockfile. `build-reader.mjs` copies exactly four source assets into `.reader-assets`; it never copies the private data directory, tests or provider config.
+The lockfile pins Wrangler 4.132.0. `build-reader.mjs` copies exactly four source assets into `.reader-assets`. It excludes the private data directory, tests and provider configuration.
 
-Set the intended Cloudflare account explicitly; do not rely on whichever account Wrangler selects by default:
+Select the intended Cloudflare account explicitly:
 
 ```sh
 export CLOUDFLARE_ACCOUNT_ID=YOUR_ACCOUNT_ID
 npx wrangler r2 bucket create committee-private-bundles
 ```
 
-Adjust `hosting/wrangler.jsonc`'s Worker and bucket names. Keep the R2 bucket private: do not enable an r2.dev URL or public custom domain for it. The Worker binding is the only read path.
+Set the Worker and bucket names in `hosting/wrangler.jsonc`. Keep the R2 bucket private. Leave its r2.dev URL and public custom domains disabled. Read access must go through the Worker binding.
 
-Generate a random publisher token of at least 32 characters with your password manager. Set it as a Worker secret through the interactive prompt:
+Use a password manager to generate a random publisher token with at least 32 characters. Enter it through Wrangler's interactive secret prompt:
 
 ```sh
 npx wrangler secret put PUBLISH_TOKEN --config hosting/wrangler.jsonc
 npx wrangler deploy --config hosting/wrangler.jsonc
 ```
 
-Do not put the publisher token on the command line, in a repository, in a userscript or in a reviewer invitation. Deployment and real bundle upload are separate operator actions. Rebuild the four assets before subsequent code deployments.
+Keep the publisher token out of command arguments, repositories, userscripts and reviewer invitations. An operator must separately deploy code and upload real bundles. Rebuild the four assets before each later code deployment.
 
-## Connect the local admin
+## Publish from the local admin
 
-In **Publish & access**, save the deployed HTTPS origin and the publisher token. These stay in the private local `publication-target.json` file. Select an event and publication profile, choose whether abstracts are included, and preview.
+In **Publish & access**, save the deployed HTTPS origin and publisher token. Committee stores them in private local `publication-target.json`.
 
-The preview lists the exact included/excluded fields and revision. Non-mechanical findings require human approval; speaker findings also require confirmed identity. Dismissed findings and hidden reviewer-derived findings are excluded. No raw custom fields, biographies, private notes, comments, credentials or unapproved model findings are copied.
+Select an event and publication profile. Choose whether to include abstracts, then preview the bundle. The preview shows the revision and exact included and excluded fields.
 
-**Publish this revision** checks that local content/approvals still match the preview. The Worker verifies its hash, writes the immutable bundle, then switches the event pointer. An incomplete upload leaves the last published bundle available. Read responses use `no-store`; userscript refreshes are every five minutes while the page is visible, or manually from its menu.
+Non-mechanical findings need human approval. Speaker findings also need confirmed identity. The bundle excludes dismissed findings, hidden reviewer-derived findings, raw custom fields, biographies, private notes, comments, credentials and unapproved model findings.
 
-For rollback, the authenticated local `POST /api/publication/rollback {revision}` restores a revision recorded as previously published by this admin. It is an explicit rollback and may restore older evidence; it does not silently bypass the normal current-data preview check. Old objects remain in R2 until a deliberate retention cleanup.
+Choose **Publish this revision** after reviewing the preview. Committee checks that local content and approvals still match it. The Worker checks the hash, writes an immutable bundle and updates the event pointer. An incomplete upload leaves the last published bundle available.
 
-## Reviewers and userscript
+Read responses use `no-store`. The userscript refreshes every five minutes while its page is visible. Reviewers can also refresh through its menu.
 
-Create an invitation with a label and explicit event IDs. The connection code is shown once and contains a read-only bearer token, site origin and permitted events. Copy it or its fragment-only connect link and share privately with the intended reviewer. Do not post it publicly. The Worker stores only a hash of the token; the local reader list also excludes the token.
+To restore a published local revision, call authenticated `POST /api/publication/rollback {revision}`. The revision must have a record of prior publication by this admin. Rollback can restore older evidence. It requires a deliberate request and leaves the normal current-data preview check in place for other publication actions.
 
-Reviewers can open the site and paste the code. To use Sessionize badges:
+R2 retains old objects until an operator deliberately removes them under the chosen retention rules.
 
-1. Install the script from the site's **Install userscript** link using Tampermonkey.
-2. Open Sessionize, then Tampermonkey → **Connect Committee…**.
-3. Paste the invitation code and allow the request to the committee's host if Tampermonkey asks.
+## Invite reviewers
 
-No script editing, local admin token or running Mac is required. The script connects only to the configured HTTPS host; its wildcard `@connect` supports operator-chosen deployments. The public Sessionize Helper remains independent and is linked to [Greasy Fork](https://greasyfork.org/en/scripts/503828/).
+Create an invitation with a label and explicit event IDs. Committee shows the connection code once. The code contains a read-only bearer token, the site origin and permitted events.
 
-Revoking an invitation removes its hashed reader record and immediately denies future requests. It cannot erase information a reviewer already downloaded or copied. The frontend keeps its code in localStorage until Disconnect, and Tampermonkey keeps its code in isolated script storage. The visible badges are readable by the Sessionize page; full private records and credentials are not injected into its DOM.
+Share the code or its fragment-only connect link privately with the intended reviewer. The Worker stores only a token hash. The local reader list excludes the token.
 
-Current reader invitations do not expire automatically. Rotate/revoke them after the committee finishes. This is per-invitation bearer access, not an enterprise identity/SSO system. Every holder of an invitation can access the selected event's published profile; UI display preferences are not an access-control boundary. Ranks/comments/votes are not currently present in exported bundles.
+Reviewers can paste the code into the hosted site. To add Sessionize badges:
 
-## Local verification
+1. Install the script from the site's **Install userscript** link with Tampermonkey.
+2. Open Sessionize. In Tampermonkey, choose **Connect Committee…**.
+3. Paste the invitation code. If Tampermonkey asks, allow requests to the Committee host.
+
+Reviewers need no script edits, local admin token or running Mac. The script connects only to the configured HTTPS host. Its wildcard `@connect` supports deployments on operator-chosen hosts.
+
+The public Sessionize Helper runs separately. Its listing remains on [Greasy Fork](https://greasyfork.org/en/scripts/503828/).
+
+## Revoke access and manage copies
+
+Revocation removes the invitation's hashed reader record and immediately blocks future requests. It cannot remove information that a reviewer has downloaded or copied.
+
+The frontend stores its code in localStorage until **Disconnect**. Tampermonkey stores its code in isolated script storage. The Sessionize page can read visible badges. The script keeps full private records and credentials out of that page's DOM.
+
+Invitations have no automatic expiry. Rotate or revoke them when the committee finishes. Anyone holding an invitation can read the selected events' published profiles. Client display preferences impose no access restrictions. Invitations provide bearer access without enterprise identity or single sign-on (SSO).
+
+Exported bundles currently contain no ranks, comments or votes.
+
+## Verify locally
 
 ```sh
 node scripts/build-reader.mjs
 npx wrangler dev --local --config hosting/wrangler.jsonc --port 43201
 ```
 
-Use a synthetic publisher secret in a gitignored `hosting/.dev.vars` file for local testing. Do not use a production secret or real corpus in test fixtures. The Worker has been tested in Wrangler/workerd with local R2: bundle upload/retrieval, exact revision, wrong-event rejection (403), revoked-token rejection (401), and the reader UI connected to that runtime.
+Put a fictional publisher secret in gitignored `hosting/.dev.vars` for local tests. Keep production secrets and real proposal datasets out of fixtures.
 
-The actual userscript was visually tested in a local synthetic Sessionize DOM fixture with a mocked GM transport to the local Worker: compact badges, topics, repeated refresh without duplicates, immediate keyboard-focus tooltip, and stale-abstract suppression. A real Tampermonkey installation against deployed HTTPS remains an acceptance step before committee rollout.
+Wrangler/workerd tests with local R2 covered bundle upload and retrieval, exact revisions, wrong-event rejection (403), revoked-token rejection (401) and the connected reader interface.
+
+Visual userscript tests used a local fictional Sessionize DOM fixture. A mock GM transport connected it to the local Worker. Checks covered compact badges, topics, repeated refresh without duplicates, immediate keyboard-focus tooltips and stale-abstract suppression.
+
+Before committee rollout, test an actual Tampermonkey installation against deployed HTTPS.
 
 References: [Workers static assets](https://developers.cloudflare.com/workers/static-assets/), [R2 Worker binding](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/), [Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/).

@@ -1,85 +1,156 @@
-# Review workspace (web/)
+# Review workspace frontend
 
-The local dashboard at `http://127.0.0.1:43127/`. Plain HTML, CSS and JavaScript in `web/`, served by `src/server.ts` under its Content Security Policy. No build step. The frontend and this document are owned by Fable; the backend is owned by Codex.
+The local dashboard runs at `http://127.0.0.1:43127/`. `src/server.ts` serves plain HTML, CSS and JavaScript from `web/` under its Content Security Policy. The frontend needs no build step.
 
-## What the reviewer sees
+Fable owns the frontend and this document. Codex owns the backend. The dated checks below record earlier interface versions. The [architecture guide](architecture.md) describes the current four-page admin navigation.
 
-- **Top bar**: search (press `/`), an Event selector (shown only when more than one event is loaded; filters client-side on each session's `eventId` until the backend adds `?eventId=`), topic filter, view profile, the Data button (capture freshness and sync), Lock. With several events loaded and none selected, docket rows show the event ID.
-- **Docket rail** (left): every proposal in the current filter. Each row shows the title, a coloured format tag (session blue, workshop green, keynote violet, lightning orange, panel teal), speakers, up to three topic chips coloured by a stable hue per topic name, a compact cluster of coloured state marks (counts of verified, proposed, contested, legacy, measured, detector and dismissed findings) and a Withdrawn mark. Sort by title, open findings first, recently checked or speaker. "Open findings only" hides proposals with nothing open.
-- **Reading column** (right): a desk in the cool ground tone. The submission sits on it as one white sheet: title, speakers, track, format, word count, topic chips and the abstract at reading width. Below the sheet: findings ordered by severity and state (state icon in a gutter, bold label and badge, reason, then one small line with evidence, actions and provenance), then related proposals.
-- **Data panel** (capture text in the top bar): a Sources section first (saved Sessionize API sources with event name, expected count, required fields and last check; an add/replace wizard: event ID, event name, API URL entered as a password field and never shown again, expected count, then "Check coverage" which fetches without importing and lists count, speakers, excluded service sessions, statuses, available custom fields, missing abstracts and warnings; required custom fields are chosen from that list; two explicit confirmations (all statuses with no category filters; unscheduled included); "Save source" is enabled only when the check count equals the expected count, the confirmations are ticked and, when the endpoint no longer lists submissions that are already imported, a separate "known removals" box is ticked (sent as `allowRemovalConfirmed`); the server verifies again), then the cookie login as a fallback, "Sync now" for an event ID or an organiser URL (only the pathname forms `/app/organizer/event/<id>` and `/app/organizer/sessions/<id>` are accepted; hashes are ignored), one row per configured event (scheduled on/off, interval 15 to 10080 minutes, last success, next due), and the run list with status, stage, progress, errors and results. It polls every 3 seconds while a run is queued or running and reloads the proposals when a run succeeds. Built to the contract Codex announced on 2026-09-15 (`GET /api/sync`, `POST /api/sync`, `PUT /api/sync/config`); until the backend ships it, the panel shows the server's real 404.
-- **Analysis and detector** (inside the Data panel): provider status from `GET /api/analysis` (model, verifier, web search; keys never reach the UI), a bounded run (event plus 1 to 100 submissions; each uses one model call, one verifier call if configured and up to three searches) and the job list with call counts and errors; a separate AI-text detector section (`GET /api/detector`, explicit paid run with the model name, Resume for paused tasks only). Model-written findings arrive as "Proposed" with the verifier verdict shown as information; on the proposal each carries Approve and Reject (speaker findings also need the "identity confirmed" box, and Approve stays disabled until it is ticked). Proposed topics appear in an amber box under the topic chips with Approve topics and Reject; approved ones merge into the chips as inferred (dashed). Approval is `POST /api/analysis/approve {id, approved, identityConfirmed}` and `POST /api/analysis/topics {versionId, approved}`.
-- **Publishing** (inside the Data panel):
-  - Save the reader deployment with its HTTPS origin and a publisher token kept on this Mac.
-  - Preview the bundle locally. The preview lists the data it includes and excludes.
-  - Choose "Publish this revision" after saving a deployment. The server checks that the data has not changed. The button stays disabled until a deployment is saved.
-  - Use Revoke in the reviewer list to remove access.
-  - Create an invitation to get a connection code shown once. Use "Copy code" or "Copy connect link" (`<origin>/#connect=<code>`). The fragment never reaches a server.
-  - Open the userscript install link on the reader origin. Follow the Tampermonkey "Connect Committee" directions.
-- **Reader mode**: the same three files are served by the hosting Worker. The page asks `GET /api/runtime` at boot; when it answers `mode: "reader"` (or, if that call fails, when the page is not on loopback or opens with `#connect=`), it asks for a reviewer connection code instead of the local token, calls `GET /api/connection` and `GET /api/bundle?eventId=` on the code's origin, and renders the published copy read-only: no corrections, no sync, the profile fixed to the bundle's, published editorial, claim and speaker findings shown as Approved (the bundle only carries human-approved ones; measurements and detector signals keep their own states), an invitation for another site refused with a clear message (the Worker's CSP only allows same-origin calls), search and topic filters applied in the browser, abstracts marked as omitted when the bundle has none. The capture button shows "Published <date>" and opens a summary of events, revisions and the disconnect instruction; Lock becomes Disconnect and clears the stored code.
-- **Deep links**: `?event=<id>&session=<id>` opens a proposal; adding `&topic=<name>` (as the userscript's inferred-topic links do) applies the topic filter on arrival while keeping that proposal selected and named in the scope line.
-- **Compare column**: opens in place when the reviewer chooses "Compare" on a related proposal. It shows the other proposal's abstract and open findings. `Esc` closes it and focus returns to the button that opened it.
+## Find and read proposals
+
+The top bar holds search, event selection, topic filtering, view profile, capture freshness and sync access, and **Lock**. Press `/` to focus search. The event selector appears only with multiple loaded events.
+
+The original frontend filtered each session's `eventId` locally pending backend `?eventId=` support. With several events and none selected, proposal rows show their event IDs.
+
+The left proposal list contains every proposal matching the current filters. Each row shows its title, speakers, format and up to three topic chips. Format colours use blue for sessions, green for workshops, violet for keynotes, orange for lightning talks and teal for panels. Each topic name has a stable colour.
+
+Compact state marks count verified, proposed, contested, legacy, measured, detector and dismissed findings. Withdrawn proposals show a separate mark. Sort by title, open findings, recent checks or speaker. **Open findings only** hides proposals without open findings.
+
+The reading column uses a cool background and a white submission panel. It shows the title, speakers, track, format, word count, topics and abstract. Findings follow in severity and state order, then related proposals.
+
+Each finding shows an icon, bold label, state badge and reason. A smaller line shows evidence, actions and origin.
+
+**Compare** opens a second column with a related proposal's abstract and open findings. `Esc` closes it and returns focus to the opening button. Links with `?event=<id>&session=<id>` open a proposal. Adding `&topic=<name>` also applies that topic filter while preserving the selected proposal in the scope line.
+
+## Connect and sync sources
+
+The original **Data** panel listed saved Sessionize sources first. Each entry showed event name, expected count, required fields and the last check.
+
+The add/replace wizard collects event ID, name, API URL and expected count. The URL uses a password field and stays hidden after saving.
+
+**Check coverage** fetches without importing. It lists submission and speaker counts, excluded service sessions, statuses, available custom fields, missing abstracts and warnings. Operators choose required custom fields from that result.
+
+Saving requires a matching expected count and two scope confirmations: all statuses without category filters, and inclusion of unscheduled sessions. Missing previously imported submissions also require a known-removals confirmation, sent as `allowRemovalConfirmed`. The server checks again before saving.
+
+Cookie login appears as a fallback. **Sync now** accepts an event ID or an organiser URL. URL parsing accepts only `/app/organizer/event/<id>` and `/app/organizer/sessions/<id>` pathnames. It ignores fragments.
+
+Each event configuration shows schedule status, its 15–10080 minute interval, last success and next due time. Run entries show status, stage, progress, errors and results.
+
+The panel polls every three seconds during queued or running jobs. A successful run reloads proposals. The 15 September 2026 implementation targeted `GET /api/sync`, `POST /api/sync` and `PUT /api/sync/config`. Before those backend routes existed, it displayed the actual 404 response.
+
+## Review analysis and detector output
+
+`GET /api/analysis` supplies model, verifier and search status without sending keys to the interface. Operators choose an event and a limit from 1 to 100 submissions. Each submission uses one main model call, an optional verifier call and up to three searches.
+
+The job list shows call counts and errors. A separate detector section uses `GET /api/detector`. It requires an explicit paid run and shows the model name. **Resume** applies only to paused tasks.
+
+Model findings appear as **Proposed**. The verifier verdict adds information without changing that state. Each proposal offers **Approve** and **Reject**. Speaker findings require the identity-confirmed checkbox before **Approve** becomes available.
+
+Proposed topics appear in an amber box beneath the chips with approval and rejection actions. Approved inferred chips have dashed borders. Actions call `POST /api/analysis/approve {id, approved, identityConfirmed}` and `POST /api/analysis/topics {versionId, approved}`.
+
+## Publish a reviewed revision
+
+1. Save the reader deployment's HTTPS origin and publisher token locally on the Mac.
+2. Preview the bundle and inspect its included and excluded fields.
+3. Choose **Publish this revision**. The server checks for changes since preview. This action stays disabled until a deployment exists.
+4. Create an invitation. Committee shows its connection code once.
+5. Choose **Copy code** or **Copy connect link**. The link uses `<origin>/#connect=<code>`, so the fragment stays out of server requests.
+6. Share the code privately. Use **Revoke** in the reviewer list to remove future access.
+
+The reader origin supplies the userscript install link and Tampermonkey **Connect Committee** instructions.
+
+## Read a hosted bundle
+
+The hosting Worker serves the same three frontend files. At startup, the page requests `GET /api/runtime`. A response of `mode: "reader"` selects reader mode.
+
+If that request fails, a non-loopback origin or `#connect=` fragment also selects reader mode. The page requests a reviewer code and calls `GET /api/connection` and `GET /api/bundle?eventId=` at its origin.
+
+Reader mode hides correction and sync controls and uses the bundle's fixed profile. Search and topic filtering run in the browser. Missing abstracts show an omission notice.
+
+Published editorial, claim and speaker findings appear as **Approved**, because bundles include only human-approved findings. Measurements and detector signals retain their own states. A code for another site produces an error. The Worker's Content Security Policy permits only same-origin calls.
+
+The capture button displays **Published <date>**. It opens event and revision information and disconnect instructions. **Disconnect** replaces **Lock** and clears the saved code.
 
 ## Finding states
 
-The state is derived in `describe()` in `web/app.js`. Fields that the backend does not send yet are handled as absent, never guessed.
+`describe()` in `web/app.js` derives states from supplied fields. It treats missing backend fields as absent.
 
-| State | Derived from | Look |
+| State | Condition | Appearance |
 | --- | --- | --- |
-| Verified | `status: "verified"` or `strength: "verified"` | filled check mark, outlined badge |
-| Verified, major | verified and `severity: "major"` | filled red badge |
-| Approved | model-proposed (`origin` starts with `analysis-v1`) and `humanApproved: true` | ink outline badge; can appear in badges and published copies |
-| Proposed | model output without human approval (default; a verifier model agreeing does not change it) | amber diamond outline, amber badge |
-| Contested | `status: "contested"` | amber, with the reviewer's note |
-| Legacy / unverified | `origin: "legacy-import"` or strength containing "legacy" | dashed grey circle, dashed badge |
-| Measured | `kind: "mechanical"` with `strength: "measured"` | gauge icon; a fact, not a judgement |
-| Detector | `kind: "detector"` | violet, listed in its own section, never counted as an open finding |
-| Dismissed | `disposition: "dismissed"` | listed last, muted, with the reason and a Restore action |
+| Verified | `status: "verified"` or `strength: "verified"` | The interface shows a filled check mark and outlined badge. |
+| Verified, major | Verified with `severity: "major"` | The badge has a red fill. |
+| Approved | `origin` starts with `analysis-v1` and `humanApproved: true` | The badge has an ink outline and can appear in published copies. |
+| Proposed | Model output lacks human approval. Verifier agreement leaves it proposed. | The icon is an amber diamond outline and the badge is amber. |
+| Contested | `status: "contested"` | The interface uses amber and shows the reviewer's note. |
+| Legacy / unverified | `origin: "legacy-import"` or strength contains `legacy` | The icon is a dashed grey circle and the badge has a dashed border. |
+| Measured | `kind: "mechanical"` and `strength: "measured"` | A gauge icon identifies a measured fact without judging quality. |
+| Detector | `kind: "detector"` | Violet signals appear separately and never count as open findings. |
+| Dismissed | `disposition: "dismissed"` | Muted entries appear last with a reason and **Restore** action. |
 
-Speaker findings without `identityConfirmed` and `humanApproved` show a warning that they are not shown as badges. Findings whose `inputClasses` include `reviewer` or `outcome` carry a "uses reviewer input" badge; the strict-blind profile removes them at the API level.
+Speaker findings missing `identityConfirmed` and `humanApproved` show a warning about badge exclusion. Findings with `reviewer` or `outcome` in `inputClasses` show **uses reviewer input**. The strict-blind profile removes them at the API level.
 
-Quoted spans (`quote`) are underlined in the abstract. Clicking a span opens the finding; "Show in abstract" scrolls to and flashes the span.
+The abstract underlines quoted spans from `quote`. Clicking a span opens its finding. **Show in abstract** scrolls to the span and briefly highlights it.
 
-## Unlocking
+## Unlock and correct findings
 
-The access token is sent as a bearer header. After a successful unlock it is stored in the browser's `localStorage` (key `committee.accessToken`) so a refresh does not ask again. Lock removes it; a 401 from the server also removes it and returns to the unlock screen. The server rejects cookie-based access by design, so cookies are not used.
+The browser sends the access token in a bearer header. After unlocking, it saves the token under `committee.accessToken` in `localStorage`. Refreshes reuse it. **Lock** or a server 401 removes it and restores the unlock screen. The server rejects cookie authentication.
 
-## Corrections
+**Dismiss…** opens a required reason field inside the finding. **Add note** records context while leaving the finding open. Both call `POST /api/disposition`, then reload data while preserving reading-column scroll position. Focus moves to the finding's **Restore** or note action.
 
-"Dismiss…" reveals a reason field inside the finding. A reason is required. "Add note" keeps the finding open and records context. Both call `POST /api/disposition` and then reload the data, keeping the reading column's scroll position. Focus moves to the finding's Restore or note action.
+## Keyboard and motion
 
-## Keyboard
+Single-key shortcuts work outside text fields:
 
-Single keys work when focus is outside a text field: `j` / `k` next or previous proposal, `/` search, `e` expand or collapse all evidence, `d` dismiss the focused finding, `c` compare with the closest related proposal, `?` shortcut sheet, `Esc` close. Arrow keys move within the docket. Everything is also reachable with Tab.
+| Key | Action |
+| --- | --- |
+| `j` / `k` | Select the next or previous proposal. |
+| `/` | Focus search. |
+| `e` | Expand or collapse all evidence. |
+| `d` | Dismiss the focused finding. |
+| `c` | Compare the closest related proposal. |
+| `?` | Open shortcut help. |
+| `Esc` | Close the active panel. |
+| Arrow keys | Move within the proposal list. |
+| Tab | Reach controls in focus order. |
 
-## Motion
+Motion patterns follow transitions.dev. Proposal changes use a 120 ms entrance without an exit delay. Evidence uses a 250 ms grid-row accordion. The compare panel reveals over 350 ms. Tooltips enter over 120 ms and hide immediately.
 
-Patterns adapted from transitions.dev: a 120 ms enter cue when the proposal changes (no exit phase, so moving on never waits), accordion for evidence (250 ms, grid rows), panel reveal for the compare column (350 ms), tooltip 120 ms in and instant out, error shake on a rejected token or empty reason, skeleton pulse then reveal while loading. `prefers-reduced-motion: reduce` sets every duration to zero and skips the JavaScript waits.
+A rejected token or empty reason triggers an error shake. Loading uses a skeleton pulse followed by a reveal. `prefers-reduced-motion: reduce` sets durations to zero and skips JavaScript waits.
 
-## Data the UI consumes
+## Data and endpoint contracts
 
-From `GET /api/sessions`: `sessions[]` with `id, eventId, title, abstract, speakers[], topics[], track[], format[], withdrawn, versionId, contentHash, findings[]`; `labels`; `status`. From each finding: `id, label, reason, quote, sources[{url,title,excerpt,date}], kind, strength, inputClasses, origin, identityConfirmed, humanApproved, disposition, note`. Optional fields rendered when present: `status, severity, checkedAt, coverage, verifier, contestedBy, contestNote`, and topics as `{label, source: "tag" | "inferred"}`.
+`GET /api/sessions` returns `sessions[]`, `labels` and `status`. Session fields are `id`, `eventId`, `title`, `abstract`, `speakers[]`, `topics[]`, `track[]`, `format[]`, `withdrawn`, `versionId`, `contentHash` and `findings[]`.
 
-Computed in the browser, and labelled as such: related proposals (shared topics or speaker within the current import) and the topic list with counts.
+Finding fields are `id`, `label`, `reason`, `quote`, `sources[{url,title,excerpt,date}]`, `kind`, `strength`, `inputClasses`, `origin`, `identityConfirmed`, `humanApproved`, `disposition` and `note`.
 
-Admin endpoints used: `GET/POST /api/source(/check)`, `GET /api/sync`, `POST /api/sync`, `PUT /api/sync/config`, `GET /api/publication`, `POST /api/publication/{target,preview,publish,invite,revoke}`, `GET /api/publication/readers`. Reader endpoints (hosted origin, Bearer reader token): `GET /api/connection`, `GET /api/bundle?eventId=`. Still requested from the backend: severity/status/coverage fields on findings, richer disposition statuses returning the updated finding, merged topic sources, and validation messages surfaced as `{error}` instead of the generic 400 text.
+Optional finding fields are `status`, `severity`, `checkedAt`, `coverage`, `verifier`, `contestedBy` and `contestNote`. Topics can use `{label, source: "tag" | "inferred"}`.
 
-## Tests
+The browser computes and labels related proposals from shared topics or speakers within the current import. It also computes topic counts.
 
-`node --test web/` runs `web/app.test.mjs`, which loads `web/app.js` in a stubbed DOM and checks state derivation, ordering, related scoring, docket sorting and topic shapes.
+Admin calls include `GET/POST /api/source(/check)`, `GET /api/sync`, `POST /api/sync` and `PUT /api/sync/config`. Publication uses `GET /api/publication`, `POST /api/publication/{target,preview,publish,invite,revoke}` and `GET /api/publication/readers`.
 
-## Validation done on 2026-09-15
+Hosted reader calls use a bearer reader token with `GET /api/connection` and `GET /api/bundle?eventId=`.
 
-Synthetic fixture only (25 invented proposals, 40 findings). Desktop 1440×900 and narrow 375/390 renders inspected; long abstract, dense findings, contested, identity-gated, dismissed, withdrawn and empty states; unlock errors; keyboard shortcuts; tooltips on hover, focus and touch; axe-core 4.13 with no violations. Reduced motion was reviewed in code, not emulated.
+The original frontend request list included severity, status and coverage fields; richer disposition statuses returning updated findings; merged topic sources; and `{error}` validation messages. These were backend requests at the time of that record.
 
-## Integration verification
+## Validation records
 
-Event names and capture dates come from `status.events`. Workspace session keys are event-scoped; links use `?event=<id>&session=<id>`. Related proposals stay within the selected proposal’s event. Topic counts are scoped to the selected event. Completed syncs refresh the full cached list once per run; polling preserves unsaved form values and focus.
+`node --test web/` runs `web/app.test.mjs`. It loads `web/app.js` in a stub DOM and tests state derivation, ordering, related scoring, sorting and topic shapes.
 
-Validated against the live private import: 386 sessions from 2025 and the 40-session 2026 pilot, interval save/restore, event switching, and deep links. Visually checked at 1280px and 390px with the populated Data panel; fixed toolbar overflow and narrow panel layout.
+### Fictional fixture, 15 September 2026
 
-## Speaker details and inferred topics (2026-09-16)
+Checks used 25 fictional proposals and 40 findings. Visual inspection covered 1440×900 desktop and 375/390-pixel narrow layouts. Cases included long abstracts, dense findings, contested findings, identity restrictions, dismissals, withdrawn proposals and empty states.
 
-Speaker-name buttons expand submitted biographies, model research assessments with source links, and other submissions in the same event. Missing research is stated explicitly. The local topic filter and proposal chips include unapproved inferred suggestions, marked “inferred, proposed”; filtering does not approve or publish them. Submitted tags take precedence over case-insensitive duplicates. The API preserves `submittedTopics` separately from the approved merged list. Published readers continue to receive only the allowed, approved topic data.
+Checks also covered unlock errors, shortcuts and hover, focus and touch tooltips. axe-core 4.13 reported zero violations. Reduced motion received code review only; browser emulation remained untested.
 
-Validated with the real local import: speaker expansion, inferred topic dropdown and chip navigation, desktop 1280px and mobile 390px layout. Research currently covers 12 of the 383 imported 2026 proposals; unanalysed proposals say inferred topics have not been generated. All 29 backend and 13 frontend tests pass.
+### Integration checks
+
+Event names and capture dates come from `status.events`. Workspace keys include event IDs. Related proposals remain within the selected event, as do topic counts. Completed syncs refresh the cached list once per run. Polling preserves unsaved values and focus.
+
+Live private-import checks used 386 sessions from 2025 and a 40-session 2026 pilot. They covered interval save and restore, event switching and deep links. Visual checks at 1280 and 390 pixels covered the populated Data panel. Fixes addressed toolbar overflow and narrow panel layout.
+
+### Speaker details and topics, 16 September 2026
+
+Speaker buttons expand submitted biographies, model research assessments, source links and other same-event submissions. Missing research displays an explicit notice.
+
+The local topic filter and chips include unapproved suggestions labelled **inferred, proposed**. Filtering leaves approval and publication unchanged. Submitted tags take precedence over case-insensitive duplicates. The API keeps `submittedTopics` separate from the approved merged list. Published readers receive only allowed, approved topics.
+
+Live local-import checks covered speaker expansion, inferred topic selection and chip navigation at 1280 and 390 pixels. Research covered 12 of 383 imported 2026 proposals. Unanalysed proposals reported that topic generation had not run. All 29 backend and 13 frontend tests passed in that record.
